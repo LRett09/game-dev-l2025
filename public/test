@@ -1,0 +1,37 @@
+<script>
+  function mySquareFunction() {
+    let myIn01 = parseFloat(document.getElementById('myNum01').value);
+    let myAnswer = myIn01 * myIn01;
+    document.getElementById('mySpan01').innerHTML = ' ' + myIn01 + ' squared = ' + myAnswer;
+  }
+
+  // Define the array of numbers
+  var numbers = ['3', '5', '8', '2', '4', '9', '3', '4', '6', '2'];
+
+  function addEveryOtherNumber() {
+    let sum = 0;
+    // Loop through the array, starting at index 0 and incrementing by 2
+    for (let i = 0; i < numbers.length; i += 2) {
+      // Add the number to the sum, converting it from a string to a number
+      sum += parseInt(numbers[i]);
+    }
+    // Display the result
+    document.getElementById('mySpan02').innerHTML = 'The sum of every other number is: ' + sum;
+  }
+</script>
+
+<h2 align="center">t1a02-video-flac-logan.html</h2>
+
+Input: <input id="myNum01" type="number" value="4"><br>
+
+Event: <input type="button" value="myEvent squares" onclick="mySquareFunction()"><br>
+
+Output:<span id="mySpan01">...</span>
+
+<br>
+---
+<br>
+
+Event: <input type="button" value="Add Every Other Number" onclick="addEveryOtherNumber()"><br>
+
+Output: <span id="mySpan02">...</span>
