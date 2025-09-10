@@ -10,13 +10,22 @@
 
   function addEveryOtherNumber() {
     let sum = 0;
+    let numbersAdded = ''; // New variable to store the list of numbers
+
     // Loop through the array, starting at index 0 and incrementing by 2
     for (let i = 0; i < numbers.length; i += 2) {
       // Add the number to the sum, converting it from a string to a number
       sum += parseInt(numbers[i]);
+      
+      // Build the string of numbers being added, separated by " + "
+      numbersAdded += numbers[i] + ' + ';
     }
-    // Display the result
-    document.getElementById('mySpan02').innerHTML = 'The sum of every other number is: ' + sum;
+    
+    // Remove the trailing " + " from the string
+    numbersAdded = numbersAdded.slice(0, -3);
+
+    // Display the list of numbers and the final sum
+    document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum;
   }
 </script>
 
@@ -28,9 +37,7 @@ Event: <input type="button" value="myEvent squares" onclick="mySquareFunction()"
 
 Output:<span id="mySpan01">...</span>
 
-<br>
 ---
-<br>
 
 Event: <input type="button" value="Add Every Other Number" onclick="addEveryOtherNumber()"><br>
 
