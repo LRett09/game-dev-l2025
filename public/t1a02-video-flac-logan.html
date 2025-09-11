@@ -33,6 +33,12 @@
 
 <div>
   <h3>Display an Object</h3>
+  <label for="carMake">Make:</label>
+  <input type="text" id="carMake" value="Ford"><br>
+  <label for="carModel">Model:</label>
+  <input type="text" id="carModel" value="Mustang"><br>
+  <label for="carYear">Year:</label>
+  <input type="text" id="carYear" value="1969"><br><br>
   <input type="button" value="Display Object" onclick="displayObject()"><br><br>
   Output: <span id="mySpan03">...</span>
 </div>
@@ -79,6 +85,10 @@
   }
 
   function displayObject() {
+    myCar.make = document.getElementById('carMake').value;
+    myCar.model = document.getElementById('carModel').value;
+    myCar.year = document.getElementById('carYear').value;
+
     document.getElementById('mySpan03').innerHTML = 'My car is a ' + myCar.year + ' ' + myCar.make + ' ' + myCar.model + '.';
   }
 
@@ -86,3 +96,4 @@
 </script>
 
 </body>
+</html>
