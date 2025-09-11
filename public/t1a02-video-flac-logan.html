@@ -3,9 +3,85 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>t1a02-video-flac-logan.html</title>
-  
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #4a5568;
+    }
+    div {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h3 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+    input[type="number"], input[type="button"] {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    input[type="button"] {
+      cursor: pointer;
+      background-color: #4c66af;
+      color: white;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+    input[type="button"]:hover {
+      background-color: #40578a;
+    }
+    #myPre01 {
+      background-color: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
+
+<h2 align="center">t1a02-video-flac-logan.html</h2>
+
+<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
+  <h3>Square a Number</h3>
+  Input: <input id="myNum01" type="number" value="4"><br><br>
+  <input type="button" value="myEvent squares" onclick="mySquareFunction()"><br><br>
+  Output: <span id="mySpan01">...</span>
+</div>
+
+<hr>
+
+<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
+  <h3>Add Every Other Number from an Array</h3>
+  
+  <p><strong>The full array is:</strong></p>
+  <pre id="myPre01"></pre>
+  
+  <br>
+  <input type="button" value="Randomize Array" onclick="generateRandomArray()"><br>
+  <input type="button" value="Add Every Other Number" onclick="addEveryOtherNumber()"><br><br>
+  Output: <span id="mySpan02">...</span>
+</div>
+
+<hr>
+
+<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
+  <h3>Display an Object</h3>
+  <input type="button" value="Display Object" onclick="displayObject()"><br><br>
+  Output: <span id="mySpan03">...</span>
+</div>
 
 <script>
   // Global variable to hold the array
@@ -51,9 +127,9 @@
 
     // Check if the sum is 24 and display the appropriate message
     if (sum === 24) {
-      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span "The sum is 24! Lucky you!"> </span>
+      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: green;">The sum is 24! Lucky you!</span>';
     } else {
-      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span "Your unlucky as you didnt get the number 24."> </span>
+      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: red;">Your unlucky as you didnt get the number 24.</span>';
     }
   }
 
@@ -65,37 +141,6 @@
   // Initial call to generate the array on page load
   window.onload = generateRandomArray;
 </script>
-
-<h2 align="center">t1a02-video-flac-logan.html</h2>
-
-<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
-  <h3>Square a Number</h3>
-  Input: <input id="myNum01" type="number" value="4"><br><br>
-  <input type="button" value="myEvent squares" onclick="mySquareFunction()"><br><br>
-  Output: <span id="mySpan01">...</span>
-</div>
-
-<hr>
-
-<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
-  <h3>Add Every Other Number from an Array</h3>
-  
-  <p><strong>The full array is:</strong></p>
-  <pre id="myPre01"></pre>
-  
-  <br>
-  <input type="button" value="Randomize Array" onclick="generateRandomArray()"><br>
-  <input type="button" value="Add Every Other Number" onclick="addEveryOtherNumber()"><br><br>
-  Output: <span id="mySpan02">...</span>
-</div>
-
-<hr>
-
-<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
-  <h3>Display an Object</h3>
-  <input type="button" value="Display Object" onclick="displayObject()"><br><br>
-  Output: <span id="mySpan03">...</span>
-</div>
 
 </body>
 </html>
