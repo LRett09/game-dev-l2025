@@ -1,94 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>t1a02-video-flac-logan.html</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>t1a02-video-flac-logan.html</title>
+    <style>
+        body { font-family: sans-serif; }
+        .output { font-weight: bold; }
+        .green { color: green; }
+        .red { color: red; }
+    </style>
 </head>
 <body>
 
 <h2 align="center">t1a02-video-flac-logan.html</h2>
 
 <div>
-  <h3>Square a Number</h3>
-  Input: <input id="myNum01" type="number" value="4"><br><br>
-  <input type="button" value="Squarin those numbers" onclick="mySquareFunction()"><br><br>
-  Output: <span id="mySpan01">...</span>
+    <h3>Square a Number</h3>
+    Input: <input id="myNum01" type="number" value="4"><br><br>
+    <input type="button" value="Squarin those numbers" onclick="mySquareFunction()"><br><br>
+    Output: <span id="mySpan01" class="output">...</span>
 </div>
 
 <hr>
 
 <div>
-  <h3>Add Every Other Number from an Array</h3>
-  
-  <p><strong>The full array is:</strong></p>
-  <pre id="myPre01"></pre>
-  
-  <br>
-  <input type="button" value="Chaos chaos!" onclick="generateRandomArray()"><br>
-  <input type="button" value="Add every other number!" onclick="addEveryOtherNumber()"><br><br>
-  Output: <span id="mySpan02">...</span>
+    <h3>Add Every Other Number from an Array</h3>
+    <p><strong>The full array is:</strong></p>
+    <pre id="myPre01"></pre>
+    <br>
+    <input type="button" value="Chaos chaos!" onclick="generateRandomArray()"><br>
+    <input type="button" value="Add every other number!" onclick="addEveryOtherNumber()"><br><br>
+    Output: <span id="mySpan02" class="output">...</span>
 </div>
 
 <hr>
 
 <div>
-  <h3>Display an Object</h3>
-  <input type="button" value="Is your fridge running?" onclick="displayObject()"><br><br>
-  Output: <span id="mySpan03">...</span>
+    <h3>Display an Object</h3>
+    <input type="button" value="Is your fridge running?" onclick="displayObject()"><br><br>
+    Output: <span id="mySpan03" class="output">...</span>
 </div>
 
 <script>
-  var numbers = [];
-  var myFridge = {
-    isRunning: false
-  };
+    const state = {
+        numbers: [],
+        myFridge: { isRunning: false }
+    };
 
-  function generateRandomArray() {
-    numbers = [];
-    for (let i = 0; i < 10; i++) {
-      numbers.push(Math.floor(Math.random() * 9) + 1);
+    const elements = {
+        pre: document.getElementById('myPre01'),
+        span: {
+            square: document.getElementById('mySpan01'),
+            add: document.getElementById('mySpan02'),
+            fridge: document.getElementById('mySpan03')
+        },
+        input: {
+            number: document.getElementById('myNum01')
+        }
+    };
+
+    function generateRandomArray() {
+        state.numbers = Array.from({ length: 10 }, () => Math.floor(Math.random() * 9) + 1);
+        elements.pre.textContent = state.numbers.join(', ');
+        elements.span.add.textContent = '...';
     }
-    document.getElementById('myPre01').innerHTML = numbers.join(', ');
-    document.getElementById('mySpan02').innerHTML = '...';
-  }
 
-  function mySquareFunction() {
-    let myIn01 = parseFloat(document.getElementById('myNum01').value);
-    let myAnswer = myIn01 * myIn01;
-    document.getElementById('mySpan01').innerHTML = ' ' + myIn01 + ' squared = ' + myAnswer;
-  }
-
-  function addEveryOtherNumber() {
-    let sum = 0;
-    let numbersAdded = '';
-
-    for (let i = 0; i < numbers.length; i += 2) {
-      sum += parseInt(numbers[i]);
-      numbersAdded += numbers[i] + ' + ';
+    function mySquareFunction() {
+        const value = parseFloat(elements.input.number.value);
+        const squared = value * value;
+        elements.span.square.textContent = `${value} squared = ${squared}`;
     }
-    
-    numbersAdded = numbersAdded.slice(0, -3);
 
-    if (sum === 24) {
-      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: green;">The sum is 24! Lucky you!</span>';
-    } else {
-      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: red;">Your unlucky as you didnt get the number 24.</span>';
+    function addEveryOtherNumber() {
+        const sum = state.numbers.reduce((acc, num, index) => acc + (index % 2 === 0 ? num : 0), 0);
+        const numbersAdded = state.numbers.filter((_, index) => index % 2 === 0).join(' + ');
+        const message = `Numbers added: ${numbersAdded}<br>The sum is: ${sum}`;
+        const finalMessage = sum === 24
+            ? `<span class="green">${message}<br>The sum is 24! Lucky you!</span>`
+            : `<span class="red">${message}<br>Your unlucky as you didn't get the number 24.</span>`;
+        elements.span.add.innerHTML = finalMessage;
     }
-  }
 
-  function displayObject() {
-    // Randomly determine if the fridge is running
-    myFridge.isRunning = Math.random() < 0.5;
-
-    // Display the status
-    if (myFridge.isRunning) {
-      document.getElementById('mySpan03').innerHTML = 'The fridge is currently **running**. You should go catch it!!';
-    } else {
-      document.getElementById('mySpan03').innerHTML = 'The fridge is currently **not running**.';
+    function displayObject() {
+        state.myFridge.isRunning = Math.random() < 0.5;
+        const status = state.myFridge.isRunning ? 'running' : 'not running';
+        const message = state.myFridge.isRunning
+            ? `The fridge is currently **running**. You should go catch it!!`
+            : `The fridge is currently **not running**.`;
+        elements.span.fridge.innerHTML = message;
     }
-  }
 
-  window.onload = generateRandomArray;
+    window.onload = generateRandomArray;
 </script>
 
 </body>
