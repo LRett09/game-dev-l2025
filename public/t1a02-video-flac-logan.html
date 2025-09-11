@@ -1,12 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>t1a02-video-flac-logan.html</title>
+  
+</head>
+<body>
+
 <script>
+  // Global variable to hold the array
+  var numbers = [];
+
+  // New object added
+  var myCar = {
+    make: "Ford",
+    model: "Mustang",
+    year: 1969
+  };
+
+  // Function to generate a new random array
+  function generateRandomArray() {
+    numbers = [];
+    for (let i = 0; i < 10; i++) {
+      numbers.push(Math.floor(Math.random() * 9) + 1);
+    }
+    // Update the display of the array
+    document.getElementById('myPre01').innerHTML = numbers.join(', ');
+    // Clear the previous sum output
+    document.getElementById('mySpan02').innerHTML = '...';
+  }
+
   function mySquareFunction() {
     let myIn01 = parseFloat(document.getElementById('myNum01').value);
     let myAnswer = myIn01 * myIn01;
     document.getElementById('mySpan01').innerHTML = ' ' + myIn01 + ' squared = ' + myAnswer;
   }
-
-  // The complete array
-  var numbers = ['3', '5', '8', '2', '4', '9', '3', '4', '6', '2'];
 
   function addEveryOtherNumber() {
     let sum = 0;
@@ -21,10 +49,21 @@
     // Remove the trailing " + "
     numbersAdded = numbersAdded.slice(0, -3);
 
-    // Display the results
-    document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum;
-
+    // Check if the sum is 24 and display the appropriate message
+    if (sum === 24) {
+      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: green;">The sum is 24! Lucky you!</span>';
+    } else {
+      document.getElementById('mySpan02').innerHTML = 'Numbers added: ' + numbersAdded + '<br>The sum is: ' + sum + '<br><span style="color: red;">Your unlucky as you didnt get the number 24.</span>';
+    }
   }
+
+  // New function to display the object's properties
+  function displayObject() {
+    document.getElementById('mySpan03').innerHTML = 'My car is a ' + myCar.year + ' ' + myCar.make + ' ' + myCar.model + '.';
+  }
+
+  // Initial call to generate the array on page load
+  window.onload = generateRandomArray;
 </script>
 
 <h2 align="center">t1a02-video-flac-logan.html</h2>
@@ -45,12 +84,18 @@
   <pre id="myPre01"></pre>
   
   <br>
+  <input type="button" value="Randomize Array" onclick="generateRandomArray()"><br>
   <input type="button" value="Add Every Other Number" onclick="addEveryOtherNumber()"><br><br>
   Output: <span id="mySpan02">...</span>
 </div>
 
-<script>
-  // Display the full array in the preformatted tag
-  document.getElementById('myPre01').innerHTML = JSON.stringify(numbers, null, 2);
-</script>
+<hr>
 
+<div style="border: 1px solid #ccc; padding: 15px; margin: 20px 0;">
+  <h3>Display an Object</h3>
+  <input type="button" value="Display Object" onclick="displayObject()"><br><br>
+  Output: <span id="mySpan03">...</span>
+</div>
+
+</body>
+</html>
