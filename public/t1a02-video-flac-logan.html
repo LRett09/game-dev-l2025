@@ -1,50 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Simplified JS Demo</title>
+</head>
 <body>
     <h2 align="center">t1a02-video-flac</h2>
-        <h3>Square a Number</h3>
-        Input: <input id="numInput" type="number" value="4"><br><br>
-        <button onclick="squareNum()">Square it!</button><br><br>
-        Output: <span id="numOutput">...</span>
+    <h3>Square a Number</h3>
+    Input: <input id="n" type="number" value="4"><br><br>
+    <button onclick="document.getElementById('o1').textContent = document.getElementById('n').value ** 2">Square it!</button><br><br>
+    Output: <span id="o1">...</span>
     <hr>
-        <h3>Add Every Other Number</h3>
-        <p><strong>The full array is:</strong></p>
-        <pre id="arrayDisplay"></pre>
-        <br>
-        <button onclick="generateArray()">Generate Array</button>
-        <button onclick="addEveryOther()">Add Every Other</button><br><br>
-        Output: <span id="addOutput">...</span>
+    <h3>Add Every Other Number</h3>
+    <p><strong>The full array is:</strong></p>
+    <pre id="o2"></pre>
+    <br>
+    <button onclick="a = Array.from({length: 10}, () => ~~(Math.random() * 9) + 1); document.getElementById('o2').textContent = a.join(', '); document.getElementById('o3').textContent = '...'">
+        Generate Array</button>
+    <button onclick="let sum = a.filter((_, i) => i % 2 === 0).reduce((s, n) => s + n, 0); document.getElementById('o3').textContent = `Numbers added: ${a.filter((_, i) => i % 2 === 0).join(' + ')}
+        \nSum: ${sum}\n${sum === 24 ? 'The sum is 24! Lucky you!' 
+        : 'You\'re unlucky as you didn\'t get the number 24.'}`">Add Every Other</button><br><br>
+    Output: <span id="o3">...</span>
     <hr>
-        <h3>Display an Object</h3>
-        <button onclick="checkFridge()">Is your fridge running?</button><br><br>
-        Output: <span id="fridgeOutput">...</span>
+    <h3>Display an Object</h3>
+    <button onclick="document.getElementById('o4').textContent = Math.random() < 0.5 ? 'The fridge is currently running. You should go catch it!!' 
+    : 'The fridge is currently not running.'">Is your fridge running?</button><br><br>
+    Output: <span id="o4">...</span>
     <script>
-        const state = { numbers: [], myFridge: { isRunning: false } };
-        const get = id => document.getElementById(id);
-        const elements = {
-            numInput: get('numInput'), numOutput: get('numOutput'),
-            arrayDisplay: get('arrayDisplay'), addOutput: get('addOutput'),
-            fridgeOutput: get('fridgeOutput')
-        };
-        function generateArray() {
-            state.numbers = Array.from({ length: 10 }, () => Math.floor(Math.random() * 9) + 1);
-            elements.arrayDisplay.textContent = state.numbers.join(', ');
-            elements.addOutput.textContent = '...';
-        }
-        function squareNum() {
-            const val = parseFloat(elements.numInput.value);
-            elements.numOutput.textContent = `${val} squared = ${val * val}`;
-        }
-        function addEveryOther() {
-            const sum = state.numbers.reduce((acc, num, index) => acc + (index % 2 === 0 ? num : 0), 0);
-            const added = state.numbers.filter((_, index) => index % 2 === 0).join(' + ');
-            const lucky = sum === 24 ? 'The sum is 24! Lucky you!' : 'You\'re unlucky as you didn\'t get the number 24.';
-            elements.addOutput.textContent = `Numbers added: ${added}\nSum: ${sum}\n${lucky}`;
-        }
-        function checkFridge() {
-            state.myFridge.isRunning = Math.random() < 0.5;
-            const status = state.myFridge.isRunning ? 'The fridge is currently running. You should go catch it!!' : 
-            'The fridge is currently not running.';
-            elements.fridgeOutput.textContent = status;
-        }
-        window.onload = generateArray;
+        let a = [];
     </script>
 </body>
+</html>
