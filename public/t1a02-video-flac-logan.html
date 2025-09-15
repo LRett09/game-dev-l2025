@@ -1,13 +1,10 @@
-\<body>
+<body>
     <h2 align="center">t1a02-video-flac</h2>
-    <div>
         <h3>Square a Number</h3>
         Input: <input id="numInput" type="number" value="4"><br><br>
         <button onclick="squareNum()">Square it!</button><br><br>
         Output: <span id="numOutput">...</span>
-    </div>
     <hr>
-    <div>
         <h3>Add Every Other Number</h3>
         <p><strong>The full array is:</strong></p>
         <pre id="arrayDisplay"></pre>
@@ -15,13 +12,10 @@
         <button onclick="generateArray()">Generate Array</button>
         <button onclick="addEveryOther()">Add Every Other</button><br><br>
         Output: <span id="addOutput">...</span>
-    </div>
     <hr>
-    <div>
         <h3>Display an Object</h3>
         <button onclick="checkFridge()">Is your fridge running?</button><br><br>
         Output: <span id="fridgeOutput">...</span>
-    </div>
     <script>
         const state = { numbers: [], myFridge: { isRunning: false } };
         const get = id => document.getElementById(id);
