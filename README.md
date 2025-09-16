@@ -1,6 +1,6 @@
 https://lrett09.github.io/game-dev-l2025/public/index
 
-# School Course GameDev 11-12, Learning Journal for _________________, Semester 1 2025
+# School Course GameDev 11-12, Learning Journal for Logan, Semester 1 2025
 
 
 Note: If you have a link to an assignment that has not been marked, put "open" after the word details inside the tag.
@@ -72,10 +72,10 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 <details><summary>Tuesday Sept 16th, 2025</summary>
 
-### Title
-1.
-1.
-1.
+### Viddeoflac quiz
+1. know the acronym
+1. learn the code for each acronym
+1. be able to explain all acronyms
 
 </details>
 
