@@ -2,30 +2,6 @@
 <html>
 <head>
     <title>Guess the Number</title>
-    <style>
-       
-        .game-container {
-            text-align: center;
-            padding: 20px;
-            background-color: #fff;
-            border: 2px solid #333;
-            border-radius: 10px;
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            cursor: pointer;
-            background-color: #333;
-            color: #fff;
-        }
-        #message {
-            margin-top: 15px;
-        }
-    </style>
 </head>
 <body>
 
@@ -41,44 +17,44 @@
 <script>
     // Variables for the game state
     let secretNumber = Math.floor(Math.random() * 100) + 1;
-    let guesses = 0;
+    let guessCount = 0;
 
     // Function to check the user's guess
     function checkGuess() {
         const userGuess = parseInt(document.getElementById('guessInput').value);
-        const messageElement = document.getElementById('message');
-        const submitBtn = document.getElementById('submitBtn');
-        const playAgainBtn = document.getElementById('playAgainBtn');
-        const guessInput = document.getElementById('guessInput');
+        const messageDisplay = document.getElementById('message');
+        const submitButton = document.getElementById('submitBtn');
+        const playAgainButton = document.getElementById('playAgainBtn');
+        const guessInputField = document.getElementById('guessInput');
 
         // Check for valid input
         if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
-            messageElement.textContent = "Please enter a valid number between 1 and 100.";
+            messageDisplay.textContent = "Please enter a valid number between 1 and 100.";
             return;
         }
 
-        guesses++;
+        guessCount++;
 
         // Compare the guess with the secret number and provide feedback
         if (userGuess === secretNumber) {
-            messageElement.textContent = `You got it! The secret number was ${secretNumber}. It took you ${guesses} guesses.`;
-            submitBtn.style.display = 'none';
-            playAgainBtn.style.display = 'inline';
-            guessInput.disabled = true;
+            messageDisplay.textContent = `You got it! The secret number was ${secretNumber}. It took you ${guessCount} guesses.`;
+            submitButton.style.display = 'none';
+            playAgainButton.style.display = 'inline';
+            guessInputField.disabled = true;
         } else if (userGuess < secretNumber) {
-            messageElement.textContent = "Too low. Try again!";
+            messageDisplay.textContent = "Too low. Try again!";
         } else {
-            messageElement.textContent = "Too high. Try again!";
+            messageDisplay.textContent = "Too high. Try again!";
         }
 
-        guessInput.value = '';
+        guessInputField.value = '';
     }
 
     // Function to reset the game and start over
     function playAgain() {
         // Generate a new random number
         secretNumber = Math.floor(Math.random() * 100) + 1;
-        guesses = 0;
+        guessCount = 0;
 
         // Reset the UI elements
         document.getElementById('message').textContent = "";
@@ -88,3 +64,7 @@
         document.getElementById('playAgainBtn').style.display = 'none';
     }
 </script>
+
+</body>
+</html>
+
