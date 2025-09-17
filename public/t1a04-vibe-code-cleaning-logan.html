@@ -1,103 +1,10 @@
 <h1 align=center>t1a04-vibe-code-cleaning-logan</h1>
 
 <h2> Cleaned code </h2> <br><br>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Guess the Number</title>
-    <style>
-       
-        .game-container {
-            text-align: center;
-            padding: 20px;
-            background-color: #fff;
-            border: 2px solid #333;
-            border-radius: 10px;
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            cursor: pointer;
-            background-color: #333;
-            color: #fff;
-        }
-        #message {
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="game-container">
-    <h1>Guess the Number!</h1>
-    <p>I'm thinking of a number between 1 and 100. Can you guess it?</p>
-    <input type="number" id="guessInput" min="1" max="100">
-    <button id="submitBtn" onclick="checkGuess()">Submit Guess</button>
-    <button id="playAgainBtn" onclick="playAgain()" style="display: none;">Play Again</button>
-    <p id="message"></p>
-</div>
-
-<script>
-    // Variables for the game state
-    let secretNumber = Math.floor(Math.random() * 100) + 1;
-    let guesses = 0;
-
-    // Function to check the user's guess
-    function checkGuess() {
-        const userGuess = parseInt(document.getElementById('guessInput').value);
-        const messageElement = document.getElementById('message');
-        const submitBtn = document.getElementById('submitBtn');
-        const playAgainBtn = document.getElementById('playAgainBtn');
-        const guessInput = document.getElementById('guessInput');
-
-        // Check for valid input
-        if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
-            messageElement.textContent = "Please enter a valid number between 1 and 100.";
-            return;
-        }
-
-        guesses++;
-
-        // Compare the guess with the secret number and provide feedback
-        if (userGuess === secretNumber) {
-            messageElement.textContent = `You got it! The secret number was ${secretNumber}. It took you ${guesses} guesses.`;
-            submitBtn.style.display = 'none';
-            playAgainBtn.style.display = 'inline';
-            guessInput.disabled = true;
-        } else if (userGuess < secretNumber) {
-            messageElement.textContent = "Too low. Try again!";
-        } else {
-            messageElement.textContent = "Too high. Try again!";
-        }
-
-        guessInput.value = '';
-    }
-
-    // Function to reset the game and start over
-    function playAgain() {
-        // Generate a new random number
-        secretNumber = Math.floor(Math.random() * 100) + 1;
-        guesses = 0;
-
-        // Reset the UI elements
-        document.getElementById('message').textContent = "";
-        document.getElementById('guessInput').value = "";
-        document.getElementById('guessInput').disabled = false;
-        document.getElementById('submitBtn').style.display = 'inline';
-        document.getElementById('playAgainBtn').style.display = 'none';
-    }
-</script>
-
-</body>
-</html>
-
+https://lrett09.github.io/game-dev-l2025/public
 
 Here is the original vibecode<br><br>
-/silly file with a silly game pt2.html
+https://lrett09.github.io/game-dev-l2025/public/silly file with a silly game pt2.html
 
 <br><br>
 <h2> My code vs the vibecode </h2>
