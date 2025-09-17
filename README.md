@@ -72,7 +72,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 <details><summary>Tuesday Sept 16th, 2025</summary>
 
-### Viddeoflac quiz
+### Videoflac quiz
 1. know the acronym
 1. learn the code for each acronym
 1. be able to explain all acronyms
@@ -81,10 +81,10 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 <details><summary>Wed Sept 17th, 2025</summary>
 
-### Title
-1.
-1.
-1.
+### Vibecoding
+1. Lists and tables
+1. Vibecode cleaning
+1. Did 9/9 on Videoflac quiz
 
 </details>
 
