@@ -90,10 +90,10 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 <details><summary>Thursday Sept 18th, 2025</summary>
 
-### Title
-1.
-1.
-1.
+### Title Forms
+1. Vibecode cleaning
+1. Learning forms
+1. Look for time to finish Lists and Tables
 
 </details>
 
