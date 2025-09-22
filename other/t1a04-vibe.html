@@ -1,1 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squish the Bug</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            transition: filter 0.5s ease-in-out;
+        }
+        .stinky {
+            filter: blur(5px);
+            pointer-events: none; /* Disables all clicks on the screen */
+        }
+        .game-board {
+            position: relative;
+            background-color: #e2e8f0;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            touch-action: none;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 12l-1.5 1.5M10.5 12l1.5 1.5M12 10.5l1.5 1.5M12 14.5l1.5-1.5M17 19l-4.5-4.5M19 17l-4.5-4.5M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" /></svg>') 12 12, pointer;
+        }
+        .bug {
+            position: absolute;
+            transition: transform 0.1s ease-out;
+            transform: scale(1);
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bug:active {
+            transform: scale(0.8);
+        }
+        .squish-splat {
+            animation: squish-fade 0.3s forwards;
+        }
+        @keyframes squish-fade {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .start-button, .message-box {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-50 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main Game Container -->
+    <div class="flex flex-col items-center justify-center space-y-8 w-full max-w-2xl mx-auto">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-white text-center drop-shadow-lg">Squish the Bug!</h1>
+
+        <!-- Score and Timer Display -->
+        <div class="flex justify-between w-full max-w-sm font-bold text-lg sm:text-xl p-4 bg-gray-700 rounded-xl shadow-inner">
+            <span>Score: <span id="score">0</span></span>
+            <span>Time: <span id="timer">30</span>s</span>
+        </div>
+
+        <!-- User Info and Leaderboard -->
+        <div class="flex flex-col sm:flex-row justify-between w-full max-w-2xl text-center sm:text-left text-sm font-medium text-gray-400">
+            <div id="userIdDisplay" class="truncate mb-2 sm:mb-0">User ID: N/A</div>
+            <div class="space-x-4">
+                <span>My High Score: <span id="myHighScore">0</span></span>
+                <span>Global High Score: <span id="globalHighScore">0</span></span>
+            </div>
+        </div>
+
+        <!-- Game Board Area -->
+        <div id="game-board" class="game-board w-full aspect-square border-4 border-gray-600">
+            <!-- Bugs will be injected here -->
+        </div>
+
+        <!-- Start Button -->
+        <button id="startButton" class="start-button px-8 py-4 bg-lime-500 hover:bg-lime-600 transition-all text-gray-900 text-2xl font-bold rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-lime-300 transform hover:scale-105">
+            Start Game
+        </button>
+
+        <!-- Message Box (Hidden by default) -->
+        <div id="messageBox" class="message-box hidden p-6 bg-slate-800 rounded-2xl shadow-2xl text-center w-full max-w-sm">
+            <h2 id="messageTitle" class="text-3xl font-bold text-lime-400 mb-2">Game Over!</h2>
+            <p id="finalScore" class="text-xl font-semibold text-white">Your final score is: 0</p>
+            <p id="highScoreMessage" class="text-green-400 mt-2 hidden">New High Score!</p>
+            <button id="playAgainButton" class="mt-4 px-6 py-3 bg-lime-500 hover:bg-lime-600 text-gray-900 font-bold rounded-full transition-all transform hover:scale-105">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // References to DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const scoreSpan = document.getElementById('score');
+        const timerSpan = document.getElementById('timer');
+        const startButton = document.getElementById('startButton');
+        const messageBox = document.getElementById('messageBox');
+        const finalScore = document.getElementById('finalScore');
+        const playAgainButton = document.getElementById('playAgainButton');
+        const myHighScoreSpan = document.getElementById('myHighScore');
+        const globalHighScoreSpan = document.getElementById('globalHighScore');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const highScoreMessage = document.getElementById('highScoreMessage');
+
+        // Game state variables
+        let score = 0;
+        let timeLeft = 30;
+        let isGameActive = false;
+        let timerId;
+        let bugSpawnerId;
+        let userId = null;
+        let myHighScore = 0;
+        let globalHighScore = 0;
+
+        // Bug definitions with new behaviors
+        const bugTypes = {
+            regular: { emoji: '🐞', points: 1, minSize: 0.1, maxSize: 0.12, minLifespan: 1000, maxLifespan: 1500, minInterval: 600, maxInterval: 800 },
+            quick: { emoji: '🐜', points: 3, minSize: 0.08, maxSize: 0.1, minLifespan: 700, maxLifespan: 1000, minInterval: 400, maxInterval: 600, speed: 5 },
+            stink: { emoji: '🤢', points: -2, minSize: 0.1, maxSize: 0.12, minLifespan: 1000, maxLifespan: 1500, minInterval: 1200, maxInterval: 1800, effectDuration: 2500 },
+        };
+
+        // Firebase auth listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `User ID: ${userId.substring(0, 12)}...`;
+
+                // Setup real-time listeners for high scores
+                setupScoreListeners();
+            } else {
+                // If no user, sign in with the custom token or anonymously
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (error) {
+                        console.error("Custom token sign-in failed:", error);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            }
+        });
+
+        // Setup real-time listeners for scores
+        const setupScoreListeners = () => {
+            // My High Score
+            const myScoreDocRef = doc(db, `/artifacts/${appId}/users/${userId}/scores/high_score`);
+            onSnapshot(myScoreDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    myHighScore = docSnap.data().value;
+                    myHighScoreSpan.textContent = myHighScore;
+                }
+            });
+
+            // Global High Score
+            const globalScoresRef = collection(db, `/artifacts/${appId}/public/data/high_scores`);
+            const globalQuery = query(globalScoresRef, orderBy("value", "desc"), limit(1));
+            onSnapshot(globalQuery, (querySnapshot) => {
+                if (!querySnapshot.empty) {
+                    globalHighScore = querySnapshot.docs[0].data().value;
+                    globalHighScoreSpan.textContent = globalHighScore;
+                }
+            });
+        };
+
+        // Save a new high score to Firestore
+        const saveHighScore = async (newScore) => {
+            if (!userId) return; // Don't save if not authenticated
+
+            const myScoreDocRef = doc(db, `/artifacts/${appId}/users/${userId}/scores/high_score`);
+            const globalScoreDocRef = doc(db, `/artifacts/${appId}/public/data/high_scores/${userId}`);
+
+            // Check if it's a new personal high score
+            if (newScore > myHighScore) {
+                highScoreMessage.classList.remove('hidden');
+                await setDoc(myScoreDocRef, { value: newScore });
+            }
+
+            // Check if it's a new global high score
+            if (newScore > globalHighScore) {
+                await setDoc(globalScoreDocRef, { value: newScore });
+            }
+        };
+
+        // Special effect for stink bugs
+        const stinkEffect = () => {
+            document.body.classList.add('stinky');
+            setTimeout(() => {
+                document.body.classList.remove('stinky');
+            }, bugTypes.stink.effectDuration);
+        };
+
+        // Function to handle a bug click
+        const handleBugClick = (event) => {
+            if (!isGameActive) return;
+
+            const bug = event.target;
+            const bugType = bug.dataset.type;
+            const points = bugTypes[bugType].points;
+            score += points;
+            scoreSpan.textContent = score;
+
+            // Apply special effects based on bug type
+            if (bugType === 'stink') {
+                stinkEffect();
+            }
+
+            // Clear any movement interval for quick bugs
+            if (bug.dataset.moveId) {
+                clearInterval(parseInt(bug.dataset.moveId));
+            }
+
+            // Animate the squish effect
+            bug.classList.add('squish-splat');
+            bug.style.pointerEvents = 'none';
+
+            // Remove the bug element after the animation
+            setTimeout(() => {
+                bug.remove();
+            }, 300);
+        };
+
+        // Function to create and place a bug
+        const createBug = () => {
+            if (!isGameActive) return;
+
+            // Randomly choose a bug type
+            const types = Object.keys(bugTypes);
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            const bugConfig = bugTypes[randomType];
+
+            const bug = document.createElement('div');
+            bug.classList.add('bug', `bug-${randomType}`, 'text-4xl', 'sm:text-5xl');
+            bug.textContent = bugConfig.emoji;
+            bug.dataset.type = randomType;
+
+            // Set random position and size
+            const gameBoardRect = gameBoard.getBoundingClientRect();
+            const bugSize = Math.random() * (bugConfig.maxSize - bugConfig.minSize) + bugConfig.minSize;
+            let x = Math.random() * (gameBoardRect.width - (gameBoardRect.width * bugSize));
+            let y = Math.random() * (gameBoardRect.height - (gameBoardRect.height * bugSize));
+            bug.style.left = `${x}px`;
+            bug.style.top = `${y}px`;
+            bug.style.width = `${gameBoardRect.width * bugSize}px`;
+            bug.style.height = `${gameBoardRect.height * bugSize}px`;
+
+            // Add event listener
+            bug.addEventListener('click', handleBugClick);
+            gameBoard.appendChild(bug);
+
+            // Give quick bugs special movement
+            if (randomType === 'quick') {
+                const moveId = setInterval(() => {
+                    const moveAmount = bugConfig.speed;
+                    const dx = (Math.random() - 0.5) * moveAmount;
+                    const dy = (Math.random() - 0.5) * moveAmount;
+                    
+                    x = x + dx;
+                    y = y + dy;
+                    
+                    // Clamp to board boundaries
+                    x = Math.max(0, Math.min(x, gameBoardRect.width - (gameBoardRect.width * bugSize)));
+                    y = Math.max(0, Math.min(y, gameBoardRect.height - (gameBoardRect.height * bugSize)));
+                    
+                    bug.style.left = `${x}px`;
+                    bug.style.top = `${y}px`;
+                }, 50);
+                bug.dataset.moveId = moveId;
+            }
+
+            // Remove bug after a short time if not squished
+            const lifespan = Math.random() * (bugConfig.maxLifespan - bugConfig.minLifespan) + bugConfig.minLifespan;
+            setTimeout(() => {
+                if (bug && gameBoard.contains(bug)) {
+                    if (bug.dataset.moveId) {
+                        clearInterval(parseInt(bug.dataset.moveId));
+                    }
+                    bug.remove();
+                }
+            }, lifespan);
+        };
+
+        // Function to end the game
+        const endGame = () => {
+            isGameActive = false;
+            clearInterval(timerId);
+            clearInterval(bugSpawnerId);
+
+            // Clean up any remaining bugs and their intervals
+            const bugs = document.querySelectorAll('.bug');
+            bugs.forEach(bug => {
+                if (bug.dataset.moveId) {
+                    clearInterval(parseInt(bug.dataset.moveId));
+                }
+                bug.remove();
+            });
+
+            // Show the game over message box
+            messageBox.classList.remove('hidden');
+            startButton.classList.add('hidden');
+            finalScore.textContent = `Your final score is: ${score}`;
+            highScoreMessage.classList.add('hidden');
+
+            // Save the score if it's a new high score
+            saveHighScore(score);
+        };
+
+        // Function to start the game
+        const startGame = () => {
+            score = 0;
+            timeLeft = 30;
+            isGameActive = true;
+            scoreSpan.textContent = score;
+            timerSpan.textContent = timeLeft;
+            messageBox.classList.add('hidden');
+            startButton.classList.add('hidden');
+
+            // Start the timer
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerSpan.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            // Start spawning bugs
+            let bugInterval = 700;
+            const difficultyIncreaseRate = 20; // Reduce interval by 20ms every 3 seconds
+            bugSpawnerId = setInterval(createBug, bugInterval);
+
+            // Increase difficulty over time
+            setInterval(() => {
+                bugInterval = Math.max(100, bugInterval - difficultyIncreaseRate);
+                clearInterval(bugSpawnerId);
+                bugSpawnerId = setInterval(createBug, bugInterval);
+            }, 3000);
+        };
+
+        // Event listeners for buttons
+        startButton.addEventListener('click', startGame);
+        playAgainButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
 
