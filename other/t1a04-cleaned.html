@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squish the Bug</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #game-board {
+            position: relative;
+            width: 80vmin; /* Responsive width */
+            height: 80vmin; /* Keeps it a square */
+            background-color: #e2e8f0;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .bug {
+            position: absolute;
+        }
+        .stinky {
+            filter: blur(5px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>Squish the Bug!</h1>
+
+        <div>
+            <span>Score: <span id="score">0</span></span>
+            <span>Time: <span id="timer">30</span>s</span>
+        </div>
+
+        <div>
+            <div>User ID: N/A</div>
+            <div>
+                <span>My High Score: <span id="myHighScore">0</span></span>
+                <span>Global High Score: <span id="globalHighScore">0</span></span>
+            </div>
+        </div>
+
+        <div id="game-board">
+            <!-- Bugs will be injected here -->
+        </div>
+
+        <button id="startButton">
+            Start Game
+        </button>
+
+        <div id="messageBox" hidden>
+            <h2 id="messageTitle">Game Over!</h2>
+            <p id="finalScore">Your final score is: 0</p>
+            <p id="highScoreMessage" hidden>New High Score!</p>
+            <button id="playAgainButton">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const [gameBoard, scoreSpan, timerSpan, startButton, messageBox, finalScore, playAgainButton, myHighScoreSpan, globalHighScoreSpan, userIdDisplay, highScoreMessage] = 
+            ['game-board', 'score', 'timer', 'startButton', 'messageBox', 'finalScore', 'playAgainButton', 'myHighScore', 'globalHighScore', 'userIdDisplay', 'highScoreMessage'].map(id => document.getElementById(id));
+
+        let [score, timeLeft, isGameActive, timerId, bugSpawnerId, userId, myHighScore, globalHighScore] = [0, 30, false, null, null, null, 0, 0];
+        
+        const bugTypes = {
+            regular: { emoji: '🐞', points: 1, minSize: 0.1, maxSize: 0.12, minLifespan: 1000, maxLifespan: 1500, minInterval: 600, maxInterval: 800 },
+            quick: { emoji: '🐜', points: 3, minSize: 0.08, maxSize: 0.1, minLifespan: 700, maxLifespan: 1000, minInterval: 400, maxInterval: 600, speed: 5 },
+            stink: { emoji: '🤢', points: -2, minSize: 0.1, maxSize: 0.12, minLifespan: 1000, maxLifespan: 1500, minInterval: 1200, maxInterval: 1800, effectDuration: 2500 },
+        };
+
+        const handleAuth = async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `User ID: ${userId.substring(0, 12)}...`;
+                setupScoreListeners();
+            } else {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } catch (e) {
+                    await signInAnonymously(auth);
+                }
+            }
+        };
+
+        const setupScoreListeners = () => {
+            const myScoreRef = doc(db, `/artifacts/${appId}/users/${userId}/scores/high_score`);
+            onSnapshot(myScoreRef, (snap) => snap.exists() && (myHighScoreSpan.textContent = myHighScore = snap.data().value));
+            const globalScoresRef = collection(db, `/artifacts/${appId}/public/data/high_scores`);
+            const globalQuery = query(globalScoresRef, orderBy("value", "desc"), limit(1));
+            onSnapshot(globalQuery, (snap) => !snap.empty && (globalHighScoreSpan.textContent = globalHighScore = snap.docs[0].data().value));
+        };
+
+        const saveHighScore = async (newScore) => {
+            if (!userId) return;
+            const myScoreRef = doc(db, `/artifacts/${appId}/users/${userId}/scores/high_score`);
+            const globalScoreRef = doc(db, `/artifacts/${appId}/public/data/high_scores/${userId}`);
+            if (newScore > myHighScore) {
+                highScoreMessage.hidden = false;
+                await setDoc(myScoreRef, { value: newScore });
+            }
+            if (newScore > globalHighScore) await setDoc(globalScoreRef, { value: newScore });
+        };
+
+        const handleBugClick = (event) => {
+            if (!isGameActive) return;
+            const bug = event.target;
+            const bugConfig = bugTypes[bug.dataset.type];
+            score += bugConfig.points;
+            scoreSpan.textContent = score;
+            if (bug.dataset.moveId) clearInterval(parseInt(bug.dataset.moveId));
+            setTimeout(() => bug.remove(), 300);
+        };
+
+        const createBug = () => {
+            if (!isGameActive) return;
+            const bugType = Object.keys(bugTypes)[Math.floor(Math.random() * Object.keys(bugTypes).length)];
+            const bugConfig = bugTypes[bugType];
+            const bug = document.createElement('div');
+            bug.textContent = bugConfig.emoji;
+            bug.dataset.type = bugType;
+            const rect = gameBoard.getBoundingClientRect();
+            const size = Math.random() * (bugConfig.maxSize - bugConfig.minSize) + bugConfig.minSize;
+            let x = Math.random() * (rect.width - (rect.width * size));
+            let y = Math.random() * (rect.height - (rect.height * size));
+            Object.assign(bug.style, { position: 'absolute', width: `${rect.width * size}px`, height: `${rect.height * size}px`, left: `${x}px`, top: `${y}px` });
+            bug.addEventListener('click', handleBugClick);
+            gameBoard.appendChild(bug);
+            if (bugType === 'quick') {
+                const moveId = setInterval(() => {
+                    const [dx, dy] = [(Math.random() - 0.5) * bugConfig.speed, (Math.random() - 0.5) * bugConfig.speed];
+                    [x, y] = [Math.max(0, Math.min(x + dx, rect.width - (rect.width * size))), Math.max(0, Math.min(y + dy, rect.height - (rect.height * size)))];
+                    Object.assign(bug.style, { left: `${x}px`, top: `${y}px` });
+                }, 50);
+                bug.dataset.moveId = moveId;
+            }
+            setTimeout(() => {
+                if (gameBoard.contains(bug)) {
+                    if (bug.dataset.moveId) clearInterval(parseInt(bug.dataset.moveId));
+                    bug.remove();
+                }
+            }, Math.random() * (bugConfig.maxLifespan - bugConfig.minLifespan) + bugConfig.minLifespan);
+        };
+
+        const endGame = () => {
+            isGameActive = false;
+            clearInterval(timerId);
+            clearInterval(bugSpawnerId);
+            document.querySelectorAll('.bug').forEach(bug => {
+                if (bug.dataset.moveId) clearInterval(parseInt(bug.dataset.moveId));
+                bug.remove();
+            });
+            messageBox.hidden = false;
+            startButton.hidden = true;
+            finalScore.textContent = `Your final score is: ${score}`;
+            highScoreMessage.hidden = true;
+            saveHighScore(score);
+        };
+
+        const startGame = () => {
+            [score, timeLeft, isGameActive] = [0, 30, true];
+            [scoreSpan.textContent, timerSpan.textContent] = [score, timeLeft];
+            messageBox.hidden = true;
+            startButton.hidden = true;
+            timerId = setInterval(() => {
+                timerSpan.textContent = --timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+            let bugInterval = 700;
+            bugSpawnerId = setInterval(createBug, bugInterval);
+            setInterval(() => {
+                bugInterval = Math.max(100, bugInterval - 20);
+                clearInterval(bugSpawnerId);
+                bugSpawnerId = setInterval(createBug, bugInterval);
+            }, 3000);
+        };
+
+        startButton.addEventListener('click', startGame);
+        playAgainButton.addEventListener('click', startGame);
+        onAuthStateChanged(auth, handleAuth);
+    </script>
+</body>
+</html>
 
