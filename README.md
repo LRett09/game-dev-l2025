@@ -97,7 +97,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Friday Sept 19th, 2025 School Goals ProD  No Classes</summary>
+<details open><summary>Friday Sept 19th, 2025 School Goals ProD  No Classes</summary>
 
 </details>
 
@@ -106,7 +106,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details ><summary>Monday Sept 22nd, 2025</summary>
 
 ### Title
-1.
+1. Working on/Finishing Lists and Tables
 1.
 1.
 
