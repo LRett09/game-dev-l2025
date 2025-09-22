@@ -103,7 +103,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 ---   
 
-<details ><summary>Monday Sept 22nd, 2025</summary>
+<details open><summary>Monday Sept 22nd, 2025</summary>
 
 ### Title
 1. Working on/Finishing Lists and Tables
@@ -112,7 +112,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Tuesday Sept 23rd, 2025</summary>
+<details open><summary>Tuesday Sept 23rd, 2025</summary>
 
 ### Title
 1.
@@ -121,7 +121,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Wed Sept 24th, 2025</summary>
+<details open><summary>Wed Sept 24th, 2025</summary>
 
 ### Title
 1.
@@ -130,7 +130,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Thursday Sept 25th, 2025</summary>
+<details open><summary>Thursday Sept 25th, 2025</summary>
 
 ### Title
 1.
@@ -139,7 +139,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Friday Sept 26th, 2025</summary>
+<details open><summary>Friday Sept 26th, 2025</summary>
 
 ### Title
 1.
