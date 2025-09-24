@@ -125,7 +125,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 ### Title
 1. Continued to work on and finished CSS assignment
-1. Added a way to acsess journal on index
+1. Added a way to acsess journal on index, then realized that that didnt make sense but it didnt work anyway so its chill
 1.
 
 </details>
