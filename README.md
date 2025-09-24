@@ -115,7 +115,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Tuesday Sept 23rd, 2025</summary>
 
 ### Title
-1.
+1. Started CSS assignment
 1.
 1.
 
@@ -124,8 +124,8 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Wed Sept 24th, 2025</summary>
 
 ### Title
-1.
-1.
+1. Continued to work on and finished CSS assignment
+1. Added a way to acsess journal on index
 1.
 
 </details>
