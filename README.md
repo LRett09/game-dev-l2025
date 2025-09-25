@@ -133,9 +133,9 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Thursday Sept 25th, 2025</summary>
 
 ### Title
-1.
-1.
-1.
+1. Made simple pcb. Far more questions than answers. At least I made it right (I think)
+1. Started t1a07 (the pcb) still need to write out the stuff but the pcb is made for it
+1. videoflac test: 6/9 (how did I do better on the quiz which was the exact same??)
 
 </details>
 
