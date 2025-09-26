@@ -142,8 +142,8 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Friday Sept 26th, 2025</summary>
 
 ### Title
-1.
-1.
+1. Did t1a08 - in and out. 
+1. Started work on a passion project with Cam at home (but we cant use Game Maker on these computers so cant work on it here yet :( )
 1.
 
 </details>
