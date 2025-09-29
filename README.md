@@ -153,9 +153,9 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details ><summary>Monday Sept 29th, 2025</summary>
 
 ### Title
-1.
-1.
-1.
+1. Started t1a09 variables  
+1. Worked a little on t1a08
+1. Still no game maker on the computers :(
 
 </details>
 
