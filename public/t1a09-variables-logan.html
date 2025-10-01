@@ -5,7 +5,8 @@
 
 <!--set values for various attributes-->
 <h3> integer</h3>
-<input type="number" id="apples_input" value="10" min="0"> <button onclick="document.getElementById('apple_display').textContent = document.getElementById('apples_input').value + ' apples';">Show Apples</button> <button onclick="const i=document.getElementById('apples_input');let v=parseInt(i.value)-1;i.value=(v<0?0:v);document.getElementById('apple_display').textContent=i.value + ' apples';">Eat Apple</button>
+<input type="number" id="apples_input" value="10" min="0"> <button onclick="document.getElementById('apple_display').textContent = document.getElementById('apples_input').value + ' apples';">Show Apples</button> 
+<button onclick="const i=document.getElementById('apples_input');let v=parseInt(i.value)-1;i.value=(v<0?0:v);document.getElementById('apple_display').textContent=i.value + ' apples';">Eat Apple</button>
     <p>Current amount: <span id="apple_display"></span></p>
 
   <!--essential content the user sees or display charecters reserved by HTML-->
