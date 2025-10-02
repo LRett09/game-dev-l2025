@@ -7,7 +7,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 ---
 
-<details open><summary>September 2025 Journal Entries</summary>
+<details><summary>September 2025 Journal Entries</summary>
 
 ---
 
@@ -97,13 +97,13 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details open><summary>Friday Sept 19th, 2025 School Goals ProD  No Classes</summary>
+<details><summary>Friday Sept 19th, 2025 School Goals ProD  No Classes</summary>
 
 </details>
 
 ---   
 
-<details open><summary>Monday Sept 22nd, 2025</summary>
+<details><summary>Monday Sept 22nd, 2025</summary>
 
 ### Title
 1. Working on/Finishing Lists and Tables
@@ -112,7 +112,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details open><summary>Tuesday Sept 23rd, 2025</summary>
+<details><summary>Tuesday Sept 23rd, 2025</summary>
 
 ### Title
 1. Started CSS assignment
@@ -121,7 +121,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details open><summary>Wed Sept 24th, 2025</summary>
+<details><summary>Wed Sept 24th, 2025</summary>
 
 ### Title
 1. Continued to work on and finished CSS assignment
@@ -130,7 +130,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details open><summary>Thursday Sept 25th, 2025</summary>
+<details><summary>Thursday Sept 25th, 2025</summary>
 
 ### Title
 1. Made simple pcb. Far more questions than answers. At least I made it right (I think)
@@ -139,7 +139,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details open><summary>Friday Sept 26th, 2025</summary>
+<details><summary>Friday Sept 26th, 2025</summary>
 
 ### Title
 1. Did t1a08 - in and out. 
@@ -170,11 +170,11 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 ---
 
-<details><summary>October 2025 Journal Entries</summary>
+<details open><summary>October 2025 Journal Entries</summary>
 
 ---
 
-<details><summary>Wednesday Oct 1st, 2025</summary>
+<details open><summary>Wednesday Oct 1st, 2025</summary>
 
 ### Title
 1.
@@ -183,16 +183,16 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 </details>
 
-<details><summary>Thursday Oct 2nd, 2025</summary>
+<details open><summary>Thursday Oct 2nd, 2025</summary>
 
 ### Title
-1.
-1.
+1. videoflac equations quiz  
+1. 
 1.
 
 </details>
 
-<details><summary>Friday Oct 3rd, 2025</summary>
+<details open><summary>Friday Oct 3rd, 2025</summary>
 
 ### Title
 1.
