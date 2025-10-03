@@ -23,13 +23,24 @@ First name: Logan. Last name: Grimbly.
 
 <!--Sets true or false-->
 <h3> boolean</h3>
- <button onclick="document.getElementById('isRaining').value">boolean</button>
 <script>
-    <input type="text" id="isRaining" value="rainProbability">
-    const chance = 0.75;
-    function rainProbability() {
-        return Math.random < rainProbability;
+    const RAIN_CHANCE = 0.75; 
+    const resultElement = document.getElementById('resultDisplay');
+
+    function checkIfRaining() {
+        const randomNumber = Math.random(); 
+
+        let isRaining;
+        if (randomNumber < RAIN_CHANCE) {
+            isRaining = true;  e.g., if random is 0.50, it's less than 0.75, so it's 
+        } else {
+            isRaining = false; 
+        }
+
+        if (isRaining) {
+            resultElement.textContent = "YES, it is raining! ☔";
+        } else {
+            resultElement.textContent = "NO, it is NOT raining! ☀️";
+        }
     }
-    if ('chance <= rainProbabilty') {"let isRaining = true;"} 
-    else {"let isRaining = false"}
-        </script>
+</script>
