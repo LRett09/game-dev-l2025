@@ -2,24 +2,30 @@
 <h1>T1A10 Counter </h1>
 <button onclick="L()">Start Loop</button>
 <p id="O" hidden>Third</p>
-<script>
-function L(){
-const O=document.getElementById('O');O.setAttribute('hidden','');const d=500;
-let x=1;
-console.log(`Starting counter... delayed by ${d}ms per step.`);
-(function C(){  if(x>5)return; 
-console.log('Count:',x);O.toggleAttribute('hidden',x!==3); x++;setTimeout(C,d);  })(); } </script>
-<br><br>
+<script>function L() {
+  const O = document.getElementById('O'), d = 500; O.hidden = true; let x = 1;
+  (function C() {
+    if (x > 5) return;
+    setTimeout(() => {
+      if (x === 3) O.hidden = false; else O.hidden = true;
+      if (x === 4) O.textContent = '';
+      x++; C();
+    }, d);
+  })();
+}</script>
+
 
 <button onclick="L2()">Start For Loop</button>
-  <p id="O2" hidden>Third</p>
-  <script>
-function L2(){ 
-  const O2=document.getElementById('O2');O.setAttribute('hidden','');const d2=500;
-for (i = 1; i <= 5; i++) {
-  if(i=3) {document.getElementById('O');O.setAttribute('hidden = false','');
-           else {'return'} } } </script>
+<p id="O2" hidden>Third</p>
+<script>function L2() {
+  const O2 = document.getElementById('O2'), d = 500; O2.hidden = true;
+  (function loop(i) {
+    if (i > 5) return;
+    setTimeout(() => {
+      O2.hidden = i === 3 ? false : true;
+      if (i === 4) O2.textContent = '';
+      loop(i + 1);
+    }, d);
+  })(1);
+}</script>
 
-  
-  
-</script>
