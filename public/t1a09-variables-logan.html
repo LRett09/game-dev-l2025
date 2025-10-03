@@ -23,8 +23,10 @@ First name: Logan. Last name: Grimbly.
 
 <!--Sets true or false-->
 <h3> boolean</h3>
-<input type="button" value="boolean it" onclick="{ 
-    checkIfRaining() }">
+<p id="resultDisplay">Click the button to check the weather!</p>
+
+<input type="button" value="Boolean It" onclick="checkIfRaining()">
+
 <script>
     const RAIN_CHANCE = 0.75; 
     const resultElement = document.getElementById('resultDisplay');
@@ -32,12 +34,7 @@ First name: Logan. Last name: Grimbly.
     function checkIfRaining() {
         const randomNumber = Math.random(); 
 
-        let isRaining;
-        if (randomNumber < RAIN_CHANCE) {
-            isRaining = true; 
-        } else {
-            isRaining = false; 
-        }
+        const isRaining = randomNumber < RAIN_CHANCE; 
 
         if (isRaining) {
             resultElement.textContent = "YES, it is raining! ☔";
