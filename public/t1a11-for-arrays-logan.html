@@ -1,0 +1,32 @@
+<!-- Making funny little arrays in for loops and stuff -->
+<h1> t1a11-For-Arrays</h1>
+
+<script>
+  let myArray = new Array()
+
+myArray[0] = 'Logan'
+myArray[1] = 'Cam'
+myArray[2] = 'Wyatt'
+  
+</script>
+
+Max Array Entry: <inout type=text id="myText01" value="3"><br>
+
+  <inout type=button value="Example onClick" onClick="{
+    let myMax = document.getElementById('MyText01').value
+    let mySum = ''
+    document.getElementById('myDiv01').innerHTML = ' '
+
+    for (let myLoop=0; myLoop < myMax; myLoop++){
+    mySum += 'Loop #:' + myLoop + 'array entry: ' + myArray[myLoop] + '<br>'
+    }
+    document.getElementById('myDiv01').innherHTML = mySum
+    }">
+
+    <div id="myDiv01">...</div>
+
+    <br>
+
+    <!-- You do atleast 7 other arrays -->
+    <br>
+    
