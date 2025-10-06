@@ -11,6 +11,7 @@ myArray[2] = 'Wyatt'
 </script>
 
 Max Array Entry: <input type=text id="myText01" value="3"><br>
+Please dont try to do more than 3 that would be cool thanks.
 
   <input type=button value="Example onClick" onClick="{
     let myMax = document.getElementById('myText01').value
@@ -29,4 +30,31 @@ Max Array Entry: <input type=text id="myText01" value="3"><br>
 
     <!-- You do atleast 7 other arrays -->
     <br>
+
+<script>
+  let myArray2 = new Array()
+
+myArray[0] = 'Minecraft'
+myArray[1] = 'Elden Ring'
+myArray[2] = 'Dead Cells'
+
+  </script>
+
+Max Array Entry: <input type=text id="myText02" value="3"><br>
+
+<input type=button value="Clicky clicky" onclick="{
+  let myMax = document.getElementById('MyText02').value
+  let mySum = ''
+  document.getElementById('myDiv02').innerHTML = ''
+
+  for (let myLoop2=0; myLoop < myMax; myLoop++){
+    mySum += 'Loop#:' + myLoop + 'array entry: ' + myArray[myLoop] + '<br>'
+  }
+  document.getElementById('myDiv02').innerHTML = mySum
+}">
+<div id="myDiv01">...</div>
+<br><br>
+</script>
+
+
     
