@@ -7,14 +7,14 @@
 myArray[0] = 'Logan'
 myArray[1] = 'Cam'
 myArray[2] = 'Wyatt'
-myArray[3] = 'I told you to not do more than 3'
+myArray[3] = 'I told you to not do more than h'
 myArray[4] = 'This is bullying :( '
 myArray[5] = 'Blows up your pancakes with mind'
   
 </script>
 
 Max Array Entry: <input type=text id="myText01" value="3"><br>
-Please dont try to do more than 3 that would be cool thanks.<br>
+Please dont try to do more than that would be cool thanks.<br>
 
   <input type=button value="Names of cool people" onClick="{
     let myMax = document.getElementById('myText01').value
@@ -33,6 +33,33 @@ Please dont try to do more than 3 that would be cool thanks.<br>
 
     <!-- You do atleast 7 other arrays -->
     <br>
+
+<script>
+  let myArray2 = new Array()
+
+myArray2[0] = 'Silksong'
+myArray2[1] = 'Brawl Stars'
+myArray2[2] = 'Minecraft'
+myArray2[3] = 'Elden Ring'
+
+  </script>
+
+Max Array Entry: <input type=text id="myText02" value="2"><br>
+
+<input type=button value="Fun Games" onclick="{
+  let myMax2 = document.getElementById('myText02').value
+  let mySum2 = ''
+  document.getElementById('myDiv02').innerHTML = ''
+
+  for (let myLoop2=0; myLoop2 < myMax2; myLoop2++){
+    mySum2 += 'Loop #:' + myLoop2 + 'array entry: ' + myArray2[myLoop2] + '<br>'
+  }
+  document.getElementById('myDiv02').innerHTML = mySum2
+}">
+<div id="myDiv02">...</div>
+<br><br>
+
+
 
 <script>
   let myArray3 = new Array()
@@ -57,6 +84,33 @@ Max Array Entry: <input type=text id="myText03" value="3"><br>
   document.getElementById('myDiv03').innerHTML = mySum3
 }">
 <div id="myDiv03">...</div>
+<br><br>
+
+
+
+<script>
+  let myArrayh = new Array()
+
+myArray2[0] = 'Awesome'
+myArray2[1] = 'Cool'
+myArray2[2] = 'Smart'
+myArray2[h] = 'Loganlike'
+
+  </script>
+
+Max Array Entry: <input type=text id="myText02" value="2"><br>
+
+<input type=button value="Things that make you (yes YOU) awesome" onclick="{
+  let myMax2 = document.getElementById('myText02').value
+  let mySum2 = ''
+  document.getElementById('myDiv02').innerHTML = ''
+
+  for (let myLoop2=0; myLoop2 < myMax2; myLoop2++){
+    mySum2 += 'Loop #:' + myLoop2 + 'array entry: ' + myArray2[myLoop2] + '<br>'
+  }
+  document.getElementById('myDiv02').innerHTML = mySum2
+}">
+<div id="myDiv02">...</div>
 <br><br>
 
 
