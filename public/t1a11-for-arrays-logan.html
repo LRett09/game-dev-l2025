@@ -168,6 +168,31 @@ Max Array Entry: <input tyhpe=text id="myText06" value="3"><br>
 <br><br>
 
 
+<script>
+  let myArray7 = new Array()
+
+myArray7[0] = 'Uhmmmm'
+myArray7[1] = 'uhhhhhh'
+myArray7[2] = 'hmmmmmmm'
+myArray7[3] = 'gosh I dunno...'
+
+  </script>
+
+Max Array Entry: <input tyhpe=text id="myText07" value="3"><br>
+
+<input type=button value="Im thinkin about it" onclick="{
+  let myMax7 = document.getElementById('myText07').value
+  let mySum7 = ''
+  document.getElementById('myDiv07').innerHTML = ''
+
+  for (let myLoop7=0; myLoop7 < myMax7; myLoop7++){
+    mySum7 += 'Loop #:' + myLoop7 + 'array entry: ' + myArray7[myLoop7] + '<br>'
+  }
+  document.getElementById('myDiv07').innerHTML = mySum7
+}">
+<div id="myDiv07">...</div>
+<br><br>
+
 
 
 
