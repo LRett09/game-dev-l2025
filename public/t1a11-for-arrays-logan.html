@@ -7,11 +7,14 @@
 myArray[0] = 'Logan'
 myArray[1] = 'Cam'
 myArray[2] = 'Wyatt'
+myArray[3] = 'I told you to not do more than 3'
+myArray[4] = 'This is bullying :( '
+myArray[5] = 'Blows up your pancakes with mind'
   
 </script>
 
 Max Array Entry: <input type=text id="myText01" value="3"><br>
-Please dont try to do more than 3 that would be cool thanks.
+Please dont try to do more than 3 that would be cool thanks.<br>
 
   <input type=button value="Names of cool people" onClick="{
     let myMax = document.getElementById('myText01').value
@@ -32,7 +35,7 @@ Please dont try to do more than 3 that would be cool thanks.
     <br>
 
 <script>
-  let myArray2 = new Array2()
+  let myArray2 = new Array()
 
 myArray2[0] = 'Minecraft'
 myArray2[1] = 'Elden Ring'
@@ -48,7 +51,7 @@ Max Array Entry: <input type=text id="myText02" value="3"><br>
   document.getElementById('myDiv02').innerHTML = ''
 
   for (let myLoop2=0; myLoop2 < myMax2; myLoop2++){
-    mySum2 += 'Loop#:' + myLoop2 + 'array entry: ' + myArray2[myLoop2] + '<br>'
+    mySum2 += 'Loop #:' + myLoop2 + 'array entry: ' + myArray2[myLoop2] + '<br>'
   }
   document.getElementById('myDiv02').innerHTML = mySum2
 }">
