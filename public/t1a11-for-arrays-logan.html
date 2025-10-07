@@ -195,5 +195,31 @@ Max Array Entry: <input tyhpe=text id="myText07" value="3"><br>
 
 
 
+<script>
+  let myArray8 = new Array()
+
+myArray8[0] = 'YAY'
+myArray8[1] = 'YIPEE'
+myArray8[2] = 'I DID IT'
+myArray8[3] = ':D'
+
+  </script>
+
+Max Array Entry: <input tyhpe=text id="myText08" value="3"><br>
+
+<input type=button value="You made it to the final array!!" onclick="{
+  let myMax8 = document.getElementById('myText08').value
+  let mySum8 = ''
+  document.getElementById('myDiv08').innerHTML = ''
+
+  for (let myLoop8=0; myLoop8 < myMax8; myLoop8++){
+    mySum8 += 'Loop #:' + myLoop8 + 'array entry: ' + myArray8[myLoop8] + '<br>'
+  }
+  document.getElementById('myDiv08').innerHTML = mySum8
+}">
+<div id="myDiv08">...</div>
+<br><br>
+
+
 
     
