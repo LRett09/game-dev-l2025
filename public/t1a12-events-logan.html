@@ -5,11 +5,5 @@
 
 <input type=button value="mouseOver" onMouseOver="{this.style.backgroundColor='green'}"> <br>
 
-<script>
-  const square = document.getElementById('blueSquare');
-        document.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'q') square.style.display = 'block'; });
-        document.addEventListener('keyup', (e) => {
-            if (e.key.toLowerCase() === 'q') square.style.display = 'none';  });
-</script>
-  
+<input type="text" value="Click here to focus" 
+    onfocus="{this.style.backgroundColor='yellow'; console.log('Input focused!')}">
