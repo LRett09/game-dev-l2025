@@ -19,6 +19,7 @@
         // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        // FIX: Corrected variable name from __initialAuthToken to __initial_auth_token
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let app, db, auth;
@@ -102,7 +103,7 @@
         };
 
         // --- Game Data Definitions ---
-        
+
         // Define which cards are locked to which class
         const CLASS_LOCKED_CARDS = {
             "Smite": "cleric",
@@ -351,6 +352,24 @@
                 [array[i], array[i]] = [array[j], array[i]];
             }
         };
+        
+        /**
+         * Collects all cards back into the deck and shuffles it completely.
+         * This is called at the start of every turn to ensure full randomization.
+         * @param {object} player - The player state object.
+         */
+        const resetAndShuffleDeck = (player) => {
+            // 1. Move all cards from hand and discard into the deck
+            player.deck.push(...player.hand);
+            player.deck.push(...player.discard);
+            player.hand = [];
+            player.discard = [];
+            
+            // 2. Shuffle the entire deck
+            shuffle(player.deck);
+        
+            gameState.log.push("Deck fully shuffled for the new turn.");
+        };
 
         const drawCards = (count) => {
             const { player } = gameState;
@@ -359,6 +378,7 @@
                 if (player.deck.length === 0) {
                     if (player.discard.length === 0) break;
 
+                    // This internal shuffle for deck depletion is still needed if a turn lasts long
                     player.deck = player.discard;
                     player.discard = [];
                     shuffle(player.deck);
@@ -386,11 +406,10 @@
             }
             
             const initialDeck = [...selectedClass.deck];
-            shuffle(initialDeck);
+            shuffle(initialDeck); // Initial shuffle
 
             updateState({
                 view: 'map',
-                currentFloor: 0,
                 currentClass: selectedClass,
                 player: {
                     hp: selectedClass.startingHP,
@@ -428,7 +447,7 @@
                 currentFloor: nextFloor,
                 enemy: newEnemy,
                 log: [`--- Floor ${nextFloor} (${isBoss ? 'BOSS' : 'Enemy'}) ---`],
-                message: { text: `Encounter on Floor ${nextFloor}!`, type: 'info' }
+                message: { text: `Encounter on Floor ${nextFloor}!`  , type: 'info' }
             });
 
             startTurn();
@@ -437,14 +456,18 @@
         const startTurn = () => {
             const { player } = gameState;
 
+            // NEW: Collect all played cards and shuffle the deck completely before starting the turn.
+            resetAndShuffleDeck(player);
+
             player.shield = 0;
             player.energy = player.maxEnergy + player.powers.darkPactBoost;
             player.powers.darkPactBoost = 0;
             player.powers.metamagicDiscount = 0;
             player.log = [];
 
-            player.discard.push(...player.hand);
-            player.hand = [];
+            // The previous logic for discarding the hand is now handled by resetAndShuffleDeck
+            // player.discard.push(...player.hand);
+            // player.hand = [];
 
             drawCards(5);
 
@@ -875,7 +898,8 @@
                     
                     <h2 class="text-2xl font-semibold text-yellow-400 mb-6 border-b-2 border-yellow-500/50 pb-1">Choose Your Champion</h2>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 max-w-7xl w-full">
+                    <!-- MODIFIED GRID: 2 columns on mobile, 4 columns on medium/large screens -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl w-full">
                         ${classCards}
                     </div>
                 </div>
