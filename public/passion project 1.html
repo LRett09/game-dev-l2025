@@ -19,7 +19,6 @@
         // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        // FIX: Corrected variable name from __initialAuthToken to __initial_auth_token
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let app, db, auth;
@@ -94,11 +93,15 @@
                 SoundManager.polySynth.triggerAttackRelease("B5", "32n", now + 0.05, 0.6);
                 SoundManager.polySynth.triggerAttackRelease("D6", "16n", now + 0.1, 0.8);
             },
-            // NEW: Damage SFX - Sharp, low impact sound
+            // Damage SFX - Sharp, low impact sound
             playDamage: () => {
                 const now = Tone.now();
-                SoundManager.synth.triggerAttackRelease("G2", "16n", now, 0.9); 
-                SoundManager.membrane.triggerAttackRelease("C1", "16n", now, 0.7); // Low thud
+                // FIX: Add an overall small offset (0.01s) to ensure this function's scheduling starts 
+                // after any immediate preceding sound effect (like playAttack or playEndTurn).
+                const startTime = now + 0.01; 
+                SoundManager.synth.triggerAttackRelease("G2", "16n", startTime, 0.9); 
+                // Schedule the second synth slightly after the first in this function
+                SoundManager.membrane.triggerAttackRelease("C1", "16n", startTime + 0.001, 0.7); // Low thud
             }
         };
 
@@ -115,8 +118,22 @@
             "Meditate": "monk",
             "Chaos Bolt": "sorcerer",
             "Metamagic": "sorcerer",
+            // NEW CLASSES
+            "Hunter's Mark": "ranger",
+            "Vanish": "ranger",
+            "Quick Shot": "ranger",
+            "Lay on Hands": "paladin",
+            "Aura of Devotion": "paladin",
+            "Divine Strike": "paladin",
+            "Wild Shape": "druid",
+            "Thorn Whip": "druid",
+            "Regrowth": "druid",
+            "Magic Missile": "wizard",
+            "Arcane Ward": "wizard",
+            "Fireball": "wizard",
         };
 
+        // All card definitions (updated with new cards and retain property)
         const CARDS = {
             strike: { name: "Strike", type: "Attack", value: 6, cost: 1, description: "Deal 6 damage." },
             defend: { name: "Defend", type: "Block", value: 5, cost: 1, description: "Gain 5 block." },
@@ -133,6 +150,24 @@
             metamagic: { name: "Metamagic", type: "Power", value: 1, cost: 0, description: "Next card played this turn costs 1 less Energy (min 0). <span class='text-yellow-300'>Sorcerer only.</span>" },
             inspiration: { name: "Inspiration", type: "Power", value: 2, cost: 1, description: "Draw 2 cards. <span class='text-yellow-300'>Bard only.</span>" },
             healing_word: { name: "Healing Word", type: "Heal", value: 3, cost: 0, description: "Restore 3 HP. <span class='text-yellow-300'>Bard only.</span>" },
+
+            // --- NEW CARDS ---
+            hunters_mark: { name: "Hunter's Mark", type: "Power", value: 2, cost: 1, description: "Next 2 Attacks deal +2 damage. <span class='text-green-300'>Ranger only.</span>" },
+            vanish: { name: "Vanish", type: "Block", value: 10, cost: 2, description: "Gain 10 block. Draw 1 card. <span class='text-green-300'>Ranger only.</span>" },
+            quick_shot: { name: "Quick Shot", type: "Attack", value: 3, cost: 0, description: "Deal 3 damage. Exhausts. <span class='text-green-300'>Ranger only.</span>" },
+            
+            lay_on_hands: { name: "Lay on Hands", type: "Heal", value: 10, cost: 3, description: "Restore 10 HP. Exhausts. <span class='text-yellow-300'>Paladin only.</span>" },
+            aura_of_devotion: { name: "Aura of Devotion", type: "Block", value: 6, cost: 1, description: "Gain 6 block and restore 2 HP. <span class='text-yellow-300'>Paladin only.</span>" },
+            divine_strike: { name: "Divine Strike", type: "Attack", value: 12, cost: 2, description: "Deal 12 damage. <span class='text-yellow-300'>Paladin only.</span>" },
+
+            wild_shape: { name: "Wild Shape", type: "Block", value: 12, cost: 2, description: "Gain 12 block. <span class='text-emerald-300'>Druid only.</span>" },
+            thorn_whip: { name: "Thorn Whip", type: "Attack", value: 7, cost: 1, description: "Deal 7 damage. <span class='text-emerald-300'>Druid only.</span>" },
+            // Added 'retains' property for new mechanic
+            regrowth: { name: "Regrowth", type: "Heal", value: 3, cost: 1, description: "Restore 3 HP. <span class='text-emerald-300'>Retain. Druid only.</span>", retains: true },
+            
+            magic_missile: { name: "Magic Missile", type: "Attack", value: 3, cost: 0, description: "Deal 3 damage 3 times. Exhausts. <span class='text-cyan-300'>Wizard only.</span>" },
+            arcane_ward: { name: "Arcane Ward", type: "Block", value: 6, cost: 0, description: "Gain 6 block. Exhausts. <span class='text-cyan-300'>Wizard only.</span>" },
+            fireball: { name: "Fireball", type: "Attack", value: 20, cost: 3, description: "Deal 20 damage. <span class='text-cyan-300'>Wizard only.</span>" },
         };
 
         const STARTING_DECKS = {
@@ -168,17 +203,47 @@
             bard: [
                 CARDS.strike, CARDS.defend, CARDS.defend, CARDS.defend, CARDS.heal,
                 CARDS.inspiration, CARDS.inspiration, CARDS.healing_word, CARDS.healing_word, CARDS.strike
-            ]
+            ],
+            // --- NEW STARTING DECKS ---
+            ranger: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike,
+                CARDS.defend, CARDS.defend, CARDS.defend, CARDS.hunters_mark, CARDS.vanish
+            ],
+            paladin: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike,
+                CARDS.defend, CARDS.defend, CARDS.defend, CARDS.divine_strike, CARDS.aura_of_devotion
+            ],
+            druid: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike, CARDS.defend,
+                CARDS.defend, CARDS.defend, CARDS.thorn_whip, CARDS.wild_shape, CARDS.regrowth
+            ],
+            wizard: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.defend, CARDS.defend,
+                CARDS.defend, CARDS.magic_missile, CARDS.arcane_ward, CARDS.fireball, CARDS.heavy_slash
+            ],
         };
 
         const CLASS_DEFINITIONS = [
+            // Starting Classes
             { id: 'fighter', name: 'Fighter', color: 'bg-red-600', startingHP: 80, deck: STARTING_DECKS.fighter, unlocked: true, requirement: 'The starting class.' },
             { id: 'cleric', name: 'Cleric', color: 'bg-yellow-500', startingHP: 70, deck: STARTING_DECKS.cleric, unlocked: true, requirement: 'The starting class.' },
-            { id: 'monk', id: 'monk', name: 'Monk', color: 'bg-orange-500', startingHP: 75, deck: STARTING_DECKS.monk, unlocked: false, requirement: 'Defeat Floor 1.' },
-            { id: 'barbarian', name: 'Barbarian', color: 'bg-red-800', startingHP: 90, deck: STARTING_DECKS.barbarian, unlocked: false, requirement: 'Defeat the first Boss (Floor 5).' },
-            { id: 'bard', name: 'Bard', color: 'bg-pink-500', startingHP: 68, deck: STARTING_DECKS.bard, unlocked: false, requirement: 'Reach Floor 7.' },
+            // NEW: Ranger starts unlocked
+            { id: 'ranger', name: 'Ranger', color: 'bg-green-700', startingHP: 75, deck: STARTING_DECKS.ranger, unlocked: true, requirement: 'The starting class.' },
+            
+            // New Unlocks
+            { id: 'paladin', name: 'Paladin', color: 'bg-indigo-500', startingHP: 85, deck: STARTING_DECKS.paladin, unlocked: false, requirement: 'Defeat Floor 3.' },
+            { id: 'druid', name: 'Druid', color: 'bg-emerald-600', startingHP: 70, deck: STARTING_DECKS.druid, unlocked: false, requirement: 'Reach Floor 6.' },
+            
+            // Re-tuned existing Unlocks
+            { id: 'monk', name: 'Monk', color: 'bg-orange-500', startingHP: 75, deck: STARTING_DECKS.monk, unlocked: false, requirement: 'Defeat the first Boss (Floor 5).' },
+            { id: 'barbarian', name: 'Barbarian', color: 'bg-red-800', startingHP: 90, deck: STARTING_DECKS.barbarian, unlocked: false, requirement: 'Reach Floor 8.' },
+            { id: 'bard', name: 'Bard', color: 'bg-pink-500', startingHP: 68, deck: STARTING_DECKS.bard, unlocked: false, requirement: 'Reach Floor 10.' },
+            
+            // High Tier Unlocks
             { id: 'sorcerer', name: 'Sorcerer', color: 'bg-cyan-700', startingHP: 65, deck: STARTING_DECKS.sorcerer, unlocked: false, requirement: 'Defeat the second Boss (Floor 10).' },
-            { id: 'warlock', name: 'Warlock', color: 'bg-purple-800', startingHP: 65, deck: STARTING_DECKS.warlock, unlocked: false, requirement: 'Reach Floor 12.' },
+            { id: 'warlock', name: 'Warlock', color: 'bg-purple-800', startingHP: 65, deck: STARTING_DECKS.warlock, unlocked: false, requirement: 'Reach Floor 13.' },
+            // NEW: Wizard (tough unlock)
+            { id: 'wizard', name: 'Wizard', color: 'bg-blue-600', startingHP: 60, deck: STARTING_DECKS.wizard, unlocked: false, requirement: 'Reach Floor 14.' },
             { id: 'rouge', name: 'Rogue', color: 'bg-gray-800', startingHP: 75, deck: STARTING_DECKS.rouge, unlocked: false, requirement: 'Complete a run (Defeat the final Boss - Floor 15).' },
         ];
 
@@ -215,8 +280,6 @@
             };
         };
 
-        const ALL_REWARD_CARDS = Object.values(CARDS).filter(c => c.name !== "Flurry of Blows");
-
         // --- Game State & Firebase Handlers ---
 
         let gameState = {
@@ -229,7 +292,7 @@
             hand: [],
             isProcessing: false,
             // Persistent data (from Firestore)
-            unlockedClasses: ['fighter', 'cleric'],
+            unlockedClasses: ['fighter', 'cleric', 'ranger'], // Ranger starts unlocked
             maxFloorBeaten: 0,
             rewards: [], // Current reward choices
             message: { text: '', type: '' } // 'success', 'error', 'info'
@@ -275,10 +338,14 @@
                 const docRef = doc(db, path, 'config');
 
                 onSnapshot(docRef, (docSnap) => {
-                    const data = docSnap.exists() ? docSnap.data() : { unlockedClasses: ['fighter', 'cleric'], maxFloorBeaten: 0 };
+                    // Default starting classes include Ranger now.
+                    const defaultUnlocks = ['fighter', 'cleric', 'ranger']; 
+                    const loadedUnlocks = docSnap.exists() ? docSnap.data().unlockedClasses || defaultUnlocks : defaultUnlocks;
+                    const maxFloor = docSnap.exists() ? docSnap.data().maxFloorBeaten || 0 : 0;
                     
-                    gameState.unlockedClasses = data.unlockedClasses || ['fighter', 'cleric'];
-                    gameState.maxFloorBeaten = data.maxFloorBeaten || 0;
+                    // Merge loaded unlocks with default, ensuring Ranger is always present
+                    gameState.unlockedClasses = [...new Set([...defaultUnlocks, ...loadedUnlocks])];
+                    gameState.maxFloorBeaten = maxFloor;
                     
                     checkUnlocks(false); 
                     
@@ -349,26 +416,35 @@
         const shuffle = (array) => {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[i]] = [array[j], array[i]];
+                // Correct element swapping (Bug fix from previous iteration)
+                [array[i], array[j]] = [array[j], array[i]]; 
             }
         };
         
         /**
          * Collects all cards back into the deck and shuffles it completely.
-         * This is called at the start of every turn to ensure full randomization.
+         * This handles the new 'Retain' mechanic.
          * @param {object} player - The player state object.
          */
         const resetAndShuffleDeck = (player) => {
-            // 1. Move all cards from hand and discard into the deck
-            player.deck.push(...player.hand);
+            // Filter cards that should be retained (stay in hand)
+            const retainedCards = player.hand.filter(card => card.retains);
+            // Non-retained cards go to the discard pile
+            const toDiscard = player.hand.filter(card => !card.retains);
+            
+            // 1. Move non-retained cards from hand and all discard cards into the deck
+            player.deck.push(...toDiscard);
             player.deck.push(...player.discard);
-            player.hand = [];
+            player.hand = retainedCards; // Only retained cards stay in hand
             player.discard = [];
             
             // 2. Shuffle the entire deck
             shuffle(player.deck);
         
             gameState.log.push("Deck fully shuffled for the new turn.");
+            if (retainedCards.length > 0) {
+                gameState.log.push(`Cards retained: ${retainedCards.map(c => c.name).join(', ')}.`);
+            }
         };
 
         const drawCards = (count) => {
@@ -378,14 +454,16 @@
                 if (player.deck.length === 0) {
                     if (player.discard.length === 0) break;
 
-                    // This internal shuffle for deck depletion is still needed if a turn lasts long
                     player.deck = player.discard;
                     player.discard = [];
                     shuffle(player.deck);
                     gameState.log.push("Deck depleted, shuffling discard pile.");
                 }
-                player.hand.push(player.deck.pop());
-                drawnCount++;
+                const card = player.deck.pop(); 
+                if (card) {
+                    player.hand.push(card);
+                    drawnCount++;
+                }
             }
             return drawnCount;
         };
@@ -397,7 +475,6 @@
                 return;
             }
 
-            // Await audio context start before playing the start sound
             try {
                 await SoundManager.startAudio(); 
                 SoundManager.playGameStart(); // Play the game start sound
@@ -406,7 +483,7 @@
             }
             
             const initialDeck = [...selectedClass.deck];
-            shuffle(initialDeck); // Initial shuffle
+            shuffle(initialDeck); 
 
             updateState({
                 view: 'map',
@@ -421,7 +498,7 @@
                     exhaust: [],
                     energy: 3,
                     maxEnergy: 3,
-                    powers: { darkPactBoost: 0, metamagicDiscount: 0 }
+                    powers: { darkPactBoost: 0, metamagicDiscount: 0, huntersMark: 0 } // Added huntersMark
                 },
                 log: [],
                 rewards: [],
@@ -456,20 +533,15 @@
         const startTurn = () => {
             const { player } = gameState;
 
-            // NEW: Collect all played cards and shuffle the deck completely before starting the turn.
-            resetAndShuffleDeck(player);
+            resetAndShuffleDeck(player); // Now handles Retain mechanic
 
             player.shield = 0;
             player.energy = player.maxEnergy + player.powers.darkPactBoost;
             player.powers.darkPactBoost = 0;
             player.powers.metamagicDiscount = 0;
-            player.log = [];
+            // player.powers.huntersMark is reduced only when an attack is played
 
-            // The previous logic for discarding the hand is now handled by resetAndShuffleDeck
-            // player.discard.push(...player.hand);
-            // player.hand = [];
-
-            drawCards(5);
+            drawCards(5 - player.hand.length); // Draw up to 5 cards (or 5 + retained cards)
 
             updateState({ player, enemy: gameState.enemy, log: gameState.log, message: { text: `Your turn (Floor ${gameState.currentFloor}).`, type: 'info' } });
         };
@@ -481,6 +553,18 @@
             }
             return cost;
         };
+        
+        // Helper function to handle battle end and UI update after card play
+        const checkEndBattleAndContinue = (playedCard) => {
+             // 1. Check win/loss condition
+            if (gameState.enemy.hp <= 0) {
+                endBattle(true);
+            } else if (gameState.player.hp <= 0) {
+                endBattle(false);
+            } else {
+                updateState({ player: gameState.player, enemy: gameState.enemy, log: gameState.log, isProcessing: false, message: { text: `${playedCard.name} played.`, type: 'success' } });
+            }
+        }
 
         const playCard = (cardIndex) => {
             const { player, enemy } = gameState;
@@ -491,18 +575,15 @@
 
             // --- CRITICAL CLASS RESTRICTION CHECK (Runtime enforcement) ---
             const requiredClassId = CLASS_LOCKED_CARDS[card.name];
-
-            if (requiredClassId) {
-                if (gameState.currentClass.id !== requiredClassId) {
-                    const requiredClassName = requiredClassId.charAt(0).toUpperCase() + requiredClassId.slice(1);
-                    updateState({ 
-                        message: { 
-                            text: `${card.name} is a ${requiredClassName} card and cannot be played by ${gameState.currentClass.name}.`, 
-                            type: 'error' 
-                        } 
-                    });
-                    return;
-                }
+            if (requiredClassId && gameState.currentClass.id !== requiredClassId) {
+                const requiredClassName = requiredClassId.charAt(0).toUpperCase() + requiredClassId.slice(1);
+                updateState({ 
+                    message: { 
+                        text: `${card.name} is a ${requiredClassName} card and cannot be played by ${gameState.currentClass.name}.`, 
+                        type: 'error' 
+                    } 
+                });
+                return;
             }
             // --- END CLASS RESTRICTION CHECK ---
 
@@ -525,41 +606,76 @@
             let heal = 0;
             let draw = 0;
             let selfDmg = 0;
+            
+            let cardGoesToExhaust = false;
 
             // Determine effect and play sound
             switch (card.type) {
                 case 'Attack': 
                     SoundManager.playAttack();
-                    // Additional check for cards that also do self-damage (like Blood Rage/Chaos Bolt)
-                    if (card.name === 'Blood Rage') { dmg = card.value; selfDmg = 2; }
-                    else if (card.name === 'Chaos Bolt') { dmg = card.value; selfDmg = 1; }
-                    else { dmg = card.value; }
+                    dmg = card.value; 
+
+                    // Special Attack effects
+                    if (card.name === 'Blood Rage') { selfDmg = 2; }
+                    else if (card.name === 'Chaos Bolt') { selfDmg = 1; }
+                    else if (card.name === 'Quick Shot') { cardGoesToExhaust = true; } 
+                    else if (card.name === 'Magic Missile') { // Handle multi-hit Magic Missile
+                        dmg = 0; // Prevent standard damage
+                        cardGoesToExhaust = true;
+                        
+                        let totalDmg = 0;
+                        for (let i = 0; i < 3; i++) {
+                            const hitDmg = card.value + (player.powers.huntersMark > 0 ? 2 : 0);
+                            const damageDealt = Math.max(0, hitDmg - enemy.shield);
+                            enemy.shield = Math.max(0, enemy.shield - hitDmg);
+                            enemy.hp = Math.max(0, enemy.hp - damageDealt);
+                            totalDmg += damageDealt;
+                            if (player.powers.huntersMark > 0) { player.powers.huntersMark--; }
+                        }
+                        gameState.log.push(`Enemy takes ${totalDmg} damage from 3 missiles.`);
+                        
+                        const playedCard = player.hand.splice(cardIndex, 1)[0];
+                        player.exhaust.push(playedCard);
+                        return checkEndBattleAndContinue(card); // Early exit for multi-hit
+                    }
+
+                    // Apply Hunter's Mark bonus to standard attacks
+                    if (player.powers.huntersMark > 0) {
+                        dmg += 2;
+                        player.powers.huntersMark--;
+                        gameState.log.push(`Hunter's Mark applied (+2 damage). ${player.powers.huntersMark} remaining.`);
+                    }
                     break;
+
                 case 'Block': 
                     SoundManager.playBlock();
                     block = card.value; 
                     if (card.name === 'Meditate') { draw = 1; }
+                    if (card.name === 'Vanish') { draw = 1; } // Ranger Vanish
+                    if (card.name === 'Arcane Ward') { cardGoesToExhaust = true; } // Wizard Arcane Ward
+                    if (card.name === 'Aura of Devotion') { heal = 2; } // Paladin Aura
                     break;
                 case 'Heal': 
                     SoundManager.playHeal();
                     heal = card.value; 
+                    if (card.name === 'Lay on Hands') { cardGoesToExhaust = true; } // Paladin Lay on Hands
                     break;
                 case 'Power': 
                     SoundManager.playPower();
                     if (card.name === 'Dark Pact') { player.powers.darkPactBoost += 1; }
                     else if (card.name === 'Metamagic') { player.powers.metamagicDiscount += 1; }
                     else if (card.name === 'Inspiration') { draw = 2; }
+                    else if (card.name === "Hunter's Mark") { player.powers.huntersMark += 2; } // Ranger Hunter's Mark
                     break;
             }
-            // Apply unique card effects not covered by type/switch
-            if (card.name === 'Flurry of Blows') dmg = card.value;
-
 
             // Apply Self Damage
             if (selfDmg > 0) {
                 player.hp = Math.max(0, player.hp - selfDmg);
                 gameState.log.push(`Player takes ${selfDmg} damage from ${card.name}.`);
-                SoundManager.playDamage(); // Play damage sound for self-damage
+                // FIX: This call to playDamage immediately follows another sound call (playAttack or playPower)
+                // The fix is now handled within playDamage itself by using a robust time offset.
+                SoundManager.playDamage(); 
             }
             
             // Apply Damage
@@ -591,22 +707,20 @@
             // Move card from hand
             const playedCard = player.hand.splice(cardIndex, 1)[0];
             
-            if (playedCard.name === 'Flurry of Blows') {
+            // Handle Exhaust
+            if (cardGoesToExhaust || playedCard.name === 'Flurry of Blows' || playedCard.name === 'Lay on Hands' || playedCard.name === 'Quick Shot' || playedCard.name === 'Magic Missile' || playedCard.name === 'Arcane Ward') {
                 player.exhaust.push(playedCard);
                 gameState.log.push(`${playedCard.name} is Exhausted.`);
-            } else {
-                player.discard.push(playedCard);
+            } 
+            // Handle Retain: If card has 'retains' property, it was filtered out by splice, 
+            // but if it didn't exhaust and didn't retain, it goes to discard.
+            else if (!playedCard.retains) {
+                 player.discard.push(playedCard);
             }
-
+            // If it retains, it was already handled by resetAndShuffleDeck (retainedCards)
 
             // Check win/loss condition
-            if (enemy.hp <= 0) {
-                endBattle(true);
-            } else if (player.hp <= 0) {
-                endBattle(false);
-            } else {
-                updateState({ player, enemy, log: gameState.log, isProcessing: false, message: { text: `${card.name} played.`, type: 'success' } });
-            }
+            checkEndBattleAndContinue(card);
         };
 
         const endTurn = () => {
@@ -714,20 +828,28 @@
 
         const checkUnlocks = (forceSave) => {
             let newlyUnlocked = false;
+            
+            // Map of class ID to the required floor number
+            const floorRequirements = {
+                'paladin': 3,       // NEW
+                'monk': 5,          // Boss 1
+                'druid': 6,         // NEW
+                'barbarian': 8,
+                'bard': 10,
+                'sorcerer': 10,     // Same as bard, but tied to Boss 2 for consistency
+                'warlock': 13,
+                'wizard': 14,       // NEW
+                'rouge': 15         // Final Boss
+            };
+
             CLASS_DEFINITIONS.forEach(cls => {
                 const isDefinedUnlocked = cls.unlocked || gameState.unlockedClasses.includes(cls.id);
-
+                
+                // Ranger starts unlocked and is in defaultUnlocks, so this handles it fine.
                 if (!isDefinedUnlocked) {
                     let shouldUnlock = false;
                     
-                    const floorNeeded = {
-                        'monk': 1,
-                        'barbarian': 5,
-                        'bard': 7,
-                        'sorcerer': 10,
-                        'warlock': 12,
-                        'rouge': 15
-                    }[cls.id];
+                    const floorNeeded = floorRequirements[cls.id];
 
                     if (floorNeeded && gameState.maxFloorBeaten >= floorNeeded) {
                         shouldUnlock = true;
@@ -753,14 +875,16 @@
             const baseRewardPool = Object.values(CARDS); 
             const currentClassId = gameState.currentClass.id;
             
+            // Filter cards to include only generic cards and cards specific to the current class
             const classFilteredPool = baseRewardPool.filter(card => {
                 const requiredClassId = CLASS_LOCKED_CARDS[card.name];
                 
-                if (!requiredClassId) {
+                // Card is generic or belongs to the current class
+                if (!requiredClassId || requiredClassId === currentClassId) {
                     return true;
                 }
                 
-                return requiredClassId === currentClassId;
+                return false;
             });
 
             const starterCardNames = ["Strike", "Defend", "Heal", "Heavy Slash", "Fortify"];
@@ -846,7 +970,10 @@
             const sortedClasses = CLASS_DEFINITIONS.sort((a, b) => {
                 const aUnlocked = gameState.unlockedClasses.includes(a.id);
                 const bUnlocked = gameState.unlockedClasses.includes(b.id);
-                return (bUnlocked ? 1 : 0) - (aUnlocked ? 1 : 0);
+                // Sort unlocked classes first, then by name
+                if (aUnlocked && !bUnlocked) return -1;
+                if (!aUnlocked && bUnlocked) return 1;
+                return a.name.localeCompare(b.name);
             });
 
 
@@ -898,8 +1025,8 @@
                     
                     <h2 class="text-2xl font-semibold text-yellow-400 mb-6 border-b-2 border-yellow-500/50 pb-1">Choose Your Champion</h2>
 
-                    <!-- MODIFIED GRID: 2 columns on mobile, 4 columns on medium/large screens -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl w-full">
+                    <!-- 4x3 Grid for 12 classes -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl w-full">
                         ${classCards}
                     </div>
                 </div>
@@ -1001,20 +1128,26 @@
                     <!-- Main Battle Area -->
                     <div class="flex flex-1 flex-col md:flex-row gap-4 mb-4">
                         <!-- Enemy Area -->
-                        <div class="flex-1 p-4 bg-gray-700 rounded-xl shadow-inner flex flex-col items-center justify-between min-h-[250px] md:min-h-0">
-                            <div class="relative w-full flex justify-center">
-                                <!-- Intent -->
-                                <div class="absolute -top-6 bg-gray-900 border-4 ${intentColor} p-2 rounded-full shadow-2xl flex items-center justify-center" title="${intentDesc}">
-                                    <span class="text-2xl font-bold mr-1">${intentValue}</span>
-                                    ${intentIcon}
-                                </div>
-                                <div class="text-4xl font-extrabold mt-8 text-red-300">
-                                    ${enemy.name}
-                                </div>
+                        <div class="flex-1 p-4 bg-gray-700 rounded-xl shadow-inner flex flex-col items-center justify-start min-h-[250px] md:min-h-0">
+                            
+                            <!-- Enemy Name -->
+                            <div class="text-4xl font-extrabold text-red-300 mb-6">
+                                ${enemy.name}
                             </div>
 
+                            <!-- Intent Display -->
+                            <div class="bg-gray-800/80 p-4 rounded-xl shadow-2xl border-4 ${intentColor.replace('text-', 'border-')} flex flex-col items-center justify-center transition-all duration-300 mb-6 w-48 h-32" title="${intentDesc}">
+                                <span class="text-xs uppercase text-gray-400 font-semibold tracking-wider">NEXT ACTION</span>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    ${intentIcon.replace('h-8 w-8', 'h-10 w-10')}
+                                    <span class="text-4xl font-extrabold ${intentColor}">${intentValue}</span>
+                                </div>
+                                <p class="text-sm mt-1 text-gray-300 font-semibold">${enemy.nextMove?.type || 'Idle'}</p>
+                            </div>
+                            <!-- END Intent Display -->
+
                             <!-- Enemy Stats -->
-                            <div class="w-full max-w-sm">
+                            <div class="w-full max-w-sm mt-auto">
                                 <!-- HP Bar -->
                                 <div class="relative h-6 bg-red-900 rounded-full shadow-md overflow-hidden mb-1">
                                     <div class="absolute h-full bg-red-500 transition-all duration-500" style="width: ${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%;"></div>
@@ -1036,6 +1169,7 @@
                             <p class="text-sm">Deck: ${player.deck.length} | Discard: ${player.discard.length} | Exhaust: ${player.exhaust.length}</p>
                             ${player.powers.darkPactBoost > 0 ? `<p class="text-sm text-purple-400">Power: +${player.powers.darkPactBoost} Energy (Next Turn)</p>` : ''}
                             ${player.powers.metamagicDiscount > 0 ? `<p class="text-sm text-cyan-400">Power: -${player.powers.metamagicDiscount} Energy Cost (Next Card)</p>` : ''}
+                            ${player.powers.huntersMark > 0 ? `<p class="text-sm text-green-400">Power: +2 Damage to next ${player.powers.huntersMark} attacks.</p>` : ''}
                         </div>
                     </div>
 
