@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcane Ascent: A Card Battler Roguelike</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for simple sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script> 
+    
+    <script type="module">
+        // --- Firebase Imports (MUST BE HERE for the Canvas environment) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // setLogLevel('Debug'); // Uncomment for Firestore debugging
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        
+        // --- Sound Manager ---
+        const SoundManager = {
+            synth: null,
+            membrane: null,
+            polySynth: null,
+
+            init: () => {
+                // 1. Attack/Power Synth (Sharp/Electric)
+                SoundManager.synth = new Tone.Synth({
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0.01, release: 0.2 }
+                }).toDestination();
+
+                // 2. Block/Thud Synth (Percussive)
+                SoundManager.membrane = new Tone.MembraneSynth({
+                    pitchDecay: 0.05,
+                    octaves: 3,
+                    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.0 }
+                }).toDestination();
+
+                // 3. Melody/Success/Heal Synth
+                SoundManager.polySynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 }
+                }).toDestination();
+                
+                console.log("SoundManager initialized.");
+            },
+
+            // A simple function to start audio context on first user click
+            startAudio: () => {
+                return new Promise((resolve, reject) => {
+                    if (Tone.context.state !== 'running') {
+                        Tone.start().then(() => {
+                            console.log("Audio Context Started by user action.");
+                            resolve();
+                        }).catch(e => {
+                            console.error("Failed to start Tone.js context:", e);
+                            reject(e);
+                        });
+                    } else {
+                        resolve();
+                    }
+                });
+            },
+            
+            // SFX Functions
+            playAttack: () => SoundManager.synth.triggerAttackRelease("C4", "8n", Tone.now(), 0.7),
+            playBlock: () => SoundManager.membrane.triggerAttackRelease("C2", "8n", Tone.now(), 0.5),
+            playHeal: () => SoundManager.polySynth.triggerAttackRelease(["E5", "G5", "C6"], "8n", Tone.now(), 0.8),
+            playPower: () => SoundManager.synth.triggerAttackRelease("G4", "16n", Tone.now(), 0.6),
+            playEndTurn: () => SoundManager.membrane.triggerAttackRelease("A1", "16n", Tone.now(), 0.4),
+            playSuccess: () => SoundManager.polySynth.triggerAttackRelease(["C5", "E5", "G5"], "4n", Tone.now(), 0.8),
+            playFailure: () => SoundManager.synth.triggerAttackRelease(["C3", "C#3"], "8n", Tone.now(), 0.5), // Dissonance for failure
+            // Game Start SFX
+            playGameStart: () => {
+                const now = Tone.now();
+                SoundManager.polySynth.triggerAttackRelease("C4", "16n", now, 0.5);
+                SoundManager.polySynth.triggerAttackRelease("E4", "16n", now + 0.1, 0.5);
+                SoundManager.polySynth.triggerAttackRelease("G4", "8n", now + 0.2, 0.8);
+            },
+            // NEW: Reward SFX - Quick, bright ascending arpeggio
+            playReward: () => {
+                const now = Tone.now();
+                SoundManager.polySynth.triggerAttackRelease("G5", "32n", now, 0.6);
+                SoundManager.polySynth.triggerAttackRelease("B5", "32n", now + 0.05, 0.6);
+                SoundManager.polySynth.triggerAttackRelease("D6", "16n", now + 0.1, 0.8);
+            },
+            // NEW: Damage SFX - Sharp, low impact sound
+            playDamage: () => {
+                const now = Tone.now();
+                SoundManager.synth.triggerAttackRelease("G2", "16n", now, 0.9); 
+                SoundManager.membrane.triggerAttackRelease("C1", "16n", now, 0.7); // Low thud
+            }
+        };
+
+        // --- Game Data Definitions ---
+        
+        // Define which cards are locked to which class
+        const CLASS_LOCKED_CARDS = {
+            "Smite": "cleric",
+            "Dark Pact": "warlock",
+            "Backstab": "rouge",
+            "Inspiration": "bard",
+            "Healing Word": "bard",
+            "Flurry of Blows": "monk",
+            "Meditate": "monk",
+            "Chaos Bolt": "sorcerer",
+            "Metamagic": "sorcerer",
+        };
+
+        const CARDS = {
+            strike: { name: "Strike", type: "Attack", value: 6, cost: 1, description: "Deal 6 damage." },
+            defend: { name: "Defend", type: "Block", value: 5, cost: 1, description: "Gain 5 block." },
+            heavy_slash: { name: "Heavy Slash", type: "Attack", value: 10, cost: 2, description: "Deal 10 damage." },
+            fortify: { name: "Fortify", type: "Block", value: 8, cost: 2, description: "Gain 8 block." },
+            heal: { name: "Heal", type: "Heal", value: 4, cost: 2, description: "Restore 4 HP." },
+            smite: { name: "Smite", type: "Attack", value: 8, cost: 1, description: "Deal 8 damage. <span class='text-yellow-300'>Cleric only.</span>" },
+            blood_rage: { name: "Blood Rage", type: "Attack", value: 14, cost: 3, description: "Deal 14 damage. Lose 2 HP." },
+            dark_pact: { name: "Dark Pact", type: "Power", value: 1, cost: 0, description: "Gain +1 Energy for the next turn. <span class='text-yellow-300'>Warlock only.</span>" },
+            backstab: { name: "Backstab", type: "Attack", value: 12, cost: 2, description: "Deal 12 damage. <span class='text-yellow-300'>Rogue only.</span>" },
+            flurry_of_blows: { name: "Flurry of Blows", type: "Attack", value: 4, cost: 0, description: "Deal 4 damage. Exhausts. <span class='text-yellow-300'>Monk only.</span>" },
+            meditate: { name: "Meditate", type: "Block", value: 3, cost: 0, description: "Gain 3 block. Draw 1 card. <span class='text-yellow-300'>Monk only.</span>" },
+            chaos_bolt: { name: "Chaos Bolt", type: "Attack", value: 16, cost: 2, description: "Deal 16 damage. Take 1 damage. <span class='text-yellow-300'>Sorcerer only.</span>" },
+            metamagic: { name: "Metamagic", type: "Power", value: 1, cost: 0, description: "Next card played this turn costs 1 less Energy (min 0). <span class='text-yellow-300'>Sorcerer only.</span>" },
+            inspiration: { name: "Inspiration", type: "Power", value: 2, cost: 1, description: "Draw 2 cards. <span class='text-yellow-300'>Bard only.</span>" },
+            healing_word: { name: "Healing Word", type: "Heal", value: 3, cost: 0, description: "Restore 3 HP. <span class='text-yellow-300'>Bard only.</span>" },
+        };
+
+        const STARTING_DECKS = {
+            fighter: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike, CARDS.strike,
+                CARDS.defend, CARDS.defend, CARDS.defend, CARDS.defend, CARDS.defend
+            ],
+            cleric: [
+                CARDS.strike, CARDS.strike, CARDS.strike, CARDS.defend, CARDS.defend,
+                CARDS.defend, CARDS.heal, CARDS.smite, CARDS.smite, CARDS.fortify
+            ],
+            barbarian: [
+                CARDS.strike, CARDS.strike, CARDS.heavy_slash, CARDS.heavy_slash, CARDS.defend,
+                CARDS.defend, CARDS.blood_rage, CARDS.blood_rage, CARDS.strike, CARDS.defend
+            ],
+            warlock: [
+                CARDS.strike, CARDS.strike, CARDS.defend, CARDS.defend, CARDS.defend,
+                CARDS.dark_pact, CARDS.dark_pact, CARDS.dark_pact, CARDS.heavy_slash, CARDS.heal
+            ],
+            rouge: [
+                CARDS.strike, CARDS.defend, CARDS.defend, CARDS.backstab, CARDS.backstab,
+                CARDS.strike, CARDS.defend, CARDS.strike, CARDS.backstab, CARDS.strike
+            ],
+            monk: [
+                CARDS.strike, CARDS.strike, CARDS.defend, CARDS.defend,
+                CARDS.flurry_of_blows, CARDS.flurry_of_blows, CARDS.flurry_of_blows,
+                CARDS.meditate, CARDS.meditate, CARDS.strike
+            ],
+            sorcerer: [
+                CARDS.strike, CARDS.strike, CARDS.defend, CARDS.defend, CARDS.defend,
+                CARDS.chaos_bolt, CARDS.chaos_bolt, CARDS.metamagic, CARDS.metamagic, CARDS.heavy_slash
+            ],
+            bard: [
+                CARDS.strike, CARDS.defend, CARDS.defend, CARDS.defend, CARDS.heal,
+                CARDS.inspiration, CARDS.inspiration, CARDS.healing_word, CARDS.healing_word, CARDS.strike
+            ]
+        };
+
+        const CLASS_DEFINITIONS = [
+            { id: 'fighter', name: 'Fighter', color: 'bg-red-600', startingHP: 80, deck: STARTING_DECKS.fighter, unlocked: true, requirement: 'The starting class.' },
+            { id: 'cleric', name: 'Cleric', color: 'bg-yellow-500', startingHP: 70, deck: STARTING_DECKS.cleric, unlocked: true, requirement: 'The starting class.' },
+            { id: 'monk', id: 'monk', name: 'Monk', color: 'bg-orange-500', startingHP: 75, deck: STARTING_DECKS.monk, unlocked: false, requirement: 'Defeat Floor 1.' },
+            { id: 'barbarian', name: 'Barbarian', color: 'bg-red-800', startingHP: 90, deck: STARTING_DECKS.barbarian, unlocked: false, requirement: 'Defeat the first Boss (Floor 5).' },
+            { id: 'bard', name: 'Bard', color: 'bg-pink-500', startingHP: 68, deck: STARTING_DECKS.bard, unlocked: false, requirement: 'Reach Floor 7.' },
+            { id: 'sorcerer', name: 'Sorcerer', color: 'bg-cyan-700', startingHP: 65, deck: STARTING_DECKS.sorcerer, unlocked: false, requirement: 'Defeat the second Boss (Floor 10).' },
+            { id: 'warlock', name: 'Warlock', color: 'bg-purple-800', startingHP: 65, deck: STARTING_DECKS.warlock, unlocked: false, requirement: 'Reach Floor 12.' },
+            { id: 'rouge', name: 'Rogue', color: 'bg-gray-800', startingHP: 75, deck: STARTING_DECKS.rouge, unlocked: false, requirement: 'Complete a run (Defeat the final Boss - Floor 15).' },
+        ];
+
+        const ENEMY_MOVES = {
+            basic_attack: (dmg) => ({ type: "Attack", value: dmg, description: `Attacks for ${dmg} damage.` }),
+            basic_block: (shd) => ({ type: "Block", value: shd, description: `Gains ${shd} block.` }),
+            heavy_attack: (dmg) => ({ type: "Attack", value: dmg, description: `Attacks for ${dmg} damage.` }),
+            heal_self: (hp) => ({ type: "Heal", value: hp, description: `Heals self for ${hp} HP.` }),
+        };
+
+        const getEnemy = (floor) => {
+            const isBoss = floor % 5 === 0;
+            if (isBoss) {
+                if (floor === 5) return { name: "Slime King", maxHp: 60, hp: 60, shield: 0, deck: [ENEMY_MOVES.heavy_attack(8), ENEMY_MOVES.basic_attack(5), ENEMY_MOVES.basic_block(5)], nextMove: null };
+                if (floor === 10) return { name: "Ancient Golem", maxHp: 100, hp: 100, shield: 0, deck: [ENEMY_MOVES.heavy_attack(12), ENEMY_MOVES.basic_block(10), ENEMY_MOVES.basic_attack(6), ENEMY_MOVES.heal_self(5)], nextMove: null };
+                if (floor === 15) return { name: "Arch-Lich", maxHp: 150, hp: 150, shield: 0, deck: [ENEMY_MOVES.heavy_attack(15), ENEMY_MOVES.basic_attack(8), ENEMY_MOVES.heal_self(10), ENEMY_MOVES.basic_attack(7), ENEMY_MOVES.basic_attack(7)], nextMove: null };
+            }
+
+            const hpScale = 30 + floor * 3;
+            const dmgScale = 4 + Math.floor(floor / 3);
+            const blockScale = 3 + Math.floor(floor / 5);
+
+            return {
+                name: `Minion ${floor}`,
+                maxHp: hpScale,
+                hp: hpScale,
+                shield: 0,
+                deck: [
+                    ENEMY_MOVES.basic_attack(dmgScale),
+                    ENEMY_MOVES.basic_attack(dmgScale),
+                    ENEMY_MOVES.basic_block(blockScale),
+                ],
+                nextMove: null
+            };
+        };
+
+        const ALL_REWARD_CARDS = Object.values(CARDS).filter(c => c.name !== "Flurry of Blows");
+
+        // --- Game State & Firebase Handlers ---
+
+        let gameState = {
+            view: 'loading', // 'loading', 'class-select', 'map', 'battle', 'reward', 'run-end'
+            currentFloor: 0,
+            currentClass: null,
+            player: null,
+            enemy: null,
+            log: [],
+            hand: [],
+            isProcessing: false,
+            // Persistent data (from Firestore)
+            unlockedClasses: ['fighter', 'cleric'],
+            maxFloorBeaten: 0,
+            rewards: [], // Current reward choices
+            message: { text: '', type: '' } // 'success', 'error', 'info'
+        };
+
+        const updateState = (newState) => {
+            gameState = { ...gameState, ...newState };
+            render();
+            if (['class-select', 'run-end'].includes(gameState.view)) {
+                savePersistentState();
+            }
+        };
+
+        const getFirestorePath = (collectionName) => {
+            return `artifacts/${appId}/users/${userId}/${collectionName}`;
+        };
+
+        const savePersistentState = async () => {
+            if (!userId || !isAuthReady) {
+                console.warn("User not authenticated or auth not ready. Cannot save state.");
+                return;
+            }
+            try {
+                const path = getFirestorePath('cardbattler');
+                const dataToSave = {
+                    unlockedClasses: gameState.unlockedClasses,
+                    maxFloorBeaten: gameState.maxFloorBeaten,
+                    lastUpdated: new Date().toISOString()
+                };
+                await setDoc(doc(db, path, 'config'), dataToSave);
+            } catch (error) {
+                console.error("Error saving persistent state:", error);
+            }
+        };
+
+        const loadPersistentState = async () => {
+            if (!userId || !isAuthReady) {
+                console.warn("User not authenticated or auth not ready. Cannot load state.");
+                return;
+            }
+            try {
+                const path = getFirestorePath('cardbattler');
+                const docRef = doc(db, path, 'config');
+
+                onSnapshot(docRef, (docSnap) => {
+                    const data = docSnap.exists() ? docSnap.data() : { unlockedClasses: ['fighter', 'cleric'], maxFloorBeaten: 0 };
+                    
+                    gameState.unlockedClasses = data.unlockedClasses || ['fighter', 'cleric'];
+                    gameState.maxFloorBeaten = data.maxFloorBeaten || 0;
+                    
+                    checkUnlocks(false); 
+                    
+                    if (gameState.view === 'loading') {
+                        updateState({ view: 'class-select' });
+                    }
+                    render(); 
+                }, (error) => {
+                    console.error("Error listening to persistent state:", error);
+                    if (gameState.view === 'loading') {
+                        updateState({ view: 'class-select' });
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error setting up state listener:", error);
+                if (gameState.view === 'loading') {
+                    updateState({ view: 'class-select' });
+                }
+            }
+        };
+
+
+        const initFirebase = async () => {
+            SoundManager.init(); // Initialize the sound manager immediately
+
+            if (!firebaseConfig) {
+                console.error("Firebase config not found. Running in mock mode.");
+                isAuthReady = true;
+                updateState({ view: 'class-select' });
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        console.log("User signed in:", userId);
+                        loadPersistentState();
+                    } else {
+                        userId = crypto.randomUUID();
+                        isAuthReady = true;
+                        console.log("User signed in anonymously with fallback ID:", userId);
+                        loadPersistentState();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                isAuthReady = true;
+                updateState({ view: 'class-select', message: { text: 'Persistence failed. Classes cannot be unlocked.', type: 'error' } });
+            }
+        };
+
+        // --- Game Logic Functions ---
+
+        const shuffle = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[i]] = [array[j], array[i]];
+            }
+        };
+
+        const drawCards = (count) => {
+            const { player } = gameState;
+            let drawnCount = 0;
+            for (let i = 0; i < count; i++) {
+                if (player.deck.length === 0) {
+                    if (player.discard.length === 0) break;
+
+                    player.deck = player.discard;
+                    player.discard = [];
+                    shuffle(player.deck);
+                    gameState.log.push("Deck depleted, shuffling discard pile.");
+                }
+                player.hand.push(player.deck.pop());
+                drawnCount++;
+            }
+            return drawnCount;
+        };
+
+        const startGame = async (classId) => {
+            const selectedClass = CLASS_DEFINITIONS.find(c => c.id === classId);
+            if (!selectedClass || !selectedClass.unlocked) {
+                updateState({ message: { text: "Cannot start run with a locked class.", type: 'error' } });
+                return;
+            }
+
+            // Await audio context start before playing the start sound
+            try {
+                await SoundManager.startAudio(); 
+                SoundManager.playGameStart(); // Play the game start sound
+            } catch (e) {
+                console.error("Could not start audio for game start.", e);
+            }
+            
+            const initialDeck = [...selectedClass.deck];
+            shuffle(initialDeck);
+
+            updateState({
+                view: 'map',
+                currentFloor: 0,
+                currentClass: selectedClass,
+                player: {
+                    hp: selectedClass.startingHP,
+                    maxHp: selectedClass.startingHP,
+                    shield: 0,
+                    deck: initialDeck,
+                    hand: [],
+                    discard: [],
+                    exhaust: [],
+                    energy: 3,
+                    maxEnergy: 3,
+                    powers: { darkPactBoost: 0, metamagicDiscount: 0 }
+                },
+                log: [],
+                rewards: [],
+                message: { text: `Run started with ${selectedClass.name}.`, type: 'success' }
+            });
+            startFloor();
+        };
+
+        const startFloor = () => {
+            const nextFloor = gameState.currentFloor + 1;
+            if (nextFloor > 15) {
+                return endGame(true);
+            }
+
+            const isBoss = nextFloor % 5 === 0;
+            const newEnemy = getEnemy(nextFloor);
+
+            const moveIndex = Math.floor(Math.random() * newEnemy.deck.length);
+            newEnemy.nextMove = newEnemy.deck[moveIndex];
+
+            updateState({
+                view: 'battle',
+                currentFloor: nextFloor,
+                enemy: newEnemy,
+                log: [`--- Floor ${nextFloor} (${isBoss ? 'BOSS' : 'Enemy'}) ---`],
+                message: { text: `Encounter on Floor ${nextFloor}!`, type: 'info' }
+            });
+
+            startTurn();
+        };
+
+        const startTurn = () => {
+            const { player } = gameState;
+
+            player.shield = 0;
+            player.energy = player.maxEnergy + player.powers.darkPactBoost;
+            player.powers.darkPactBoost = 0;
+            player.powers.metamagicDiscount = 0;
+            player.log = [];
+
+            player.discard.push(...player.hand);
+            player.hand = [];
+
+            drawCards(5);
+
+            updateState({ player, enemy: gameState.enemy, log: gameState.log, message: { text: `Your turn (Floor ${gameState.currentFloor}).`, type: 'info' } });
+        };
+
+        const getCardCost = (card) => {
+            let cost = card.cost;
+            if (gameState.player.powers.metamagicDiscount > 0) {
+                cost = Math.max(0, cost - gameState.player.powers.metamagicDiscount);
+            }
+            return cost;
+        };
+
+        const playCard = (cardIndex) => {
+            const { player, enemy } = gameState;
+            const card = player.hand[cardIndex];
+            const actualCost = getCardCost(card);
+
+            if (gameState.isProcessing) return;
+
+            // --- CRITICAL CLASS RESTRICTION CHECK (Runtime enforcement) ---
+            const requiredClassId = CLASS_LOCKED_CARDS[card.name];
+
+            if (requiredClassId) {
+                if (gameState.currentClass.id !== requiredClassId) {
+                    const requiredClassName = requiredClassId.charAt(0).toUpperCase() + requiredClassId.slice(1);
+                    updateState({ 
+                        message: { 
+                            text: `${card.name} is a ${requiredClassName} card and cannot be played by ${gameState.currentClass.name}.`, 
+                            type: 'error' 
+                        } 
+                    });
+                    return;
+                }
+            }
+            // --- END CLASS RESTRICTION CHECK ---
+
+            if (actualCost > player.energy) {
+                updateState({ message: { text: "Not enough Energy to play this card.", type: 'error' } });
+                return;
+            }
+
+            updateState({ isProcessing: true });
+            player.energy -= actualCost;
+
+            if (actualCost < card.cost) {
+                player.powers.metamagicDiscount = 0;
+            }
+
+            gameState.log.push(`${gameState.currentClass?.name || 'Player'} plays ${card.name} (${card.type}).`);
+
+            let dmg = 0;
+            let block = 0;
+            let heal = 0;
+            let draw = 0;
+            let selfDmg = 0;
+
+            // Determine effect and play sound
+            switch (card.type) {
+                case 'Attack': 
+                    SoundManager.playAttack();
+                    // Additional check for cards that also do self-damage (like Blood Rage/Chaos Bolt)
+                    if (card.name === 'Blood Rage') { dmg = card.value; selfDmg = 2; }
+                    else if (card.name === 'Chaos Bolt') { dmg = card.value; selfDmg = 1; }
+                    else { dmg = card.value; }
+                    break;
+                case 'Block': 
+                    SoundManager.playBlock();
+                    block = card.value; 
+                    if (card.name === 'Meditate') { draw = 1; }
+                    break;
+                case 'Heal': 
+                    SoundManager.playHeal();
+                    heal = card.value; 
+                    break;
+                case 'Power': 
+                    SoundManager.playPower();
+                    if (card.name === 'Dark Pact') { player.powers.darkPactBoost += 1; }
+                    else if (card.name === 'Metamagic') { player.powers.metamagicDiscount += 1; }
+                    else if (card.name === 'Inspiration') { draw = 2; }
+                    break;
+            }
+            // Apply unique card effects not covered by type/switch
+            if (card.name === 'Flurry of Blows') dmg = card.value;
+
+
+            // Apply Self Damage
+            if (selfDmg > 0) {
+                player.hp = Math.max(0, player.hp - selfDmg);
+                gameState.log.push(`Player takes ${selfDmg} damage from ${card.name}.`);
+                SoundManager.playDamage(); // Play damage sound for self-damage
+            }
+            
+            // Apply Damage
+            if (dmg > 0) {
+                const damageDealt = Math.max(0, dmg - enemy.shield);
+                enemy.shield = Math.max(0, enemy.shield - dmg);
+                enemy.hp = Math.max(0, enemy.hp - damageDealt);
+                gameState.log.push(`Enemy takes ${damageDealt} damage.`);
+            }
+
+            // Apply Block
+            if (block > 0) {
+                player.shield += block;
+                gameState.log.push(`Player gains ${block} shield.`);
+            }
+
+            // Apply Heal
+            if (heal > 0) {
+                player.hp = Math.min(player.maxHp, player.hp + heal);
+                gameState.log.push(`Player restores ${heal} HP.`);
+            }
+
+            // Apply Draw
+            if (draw > 0) {
+                drawCards(draw);
+                gameState.log.push(`Player draws ${draw} cards.`);
+            }
+
+            // Move card from hand
+            const playedCard = player.hand.splice(cardIndex, 1)[0];
+            
+            if (playedCard.name === 'Flurry of Blows') {
+                player.exhaust.push(playedCard);
+                gameState.log.push(`${playedCard.name} is Exhausted.`);
+            } else {
+                player.discard.push(playedCard);
+            }
+
+
+            // Check win/loss condition
+            if (enemy.hp <= 0) {
+                endBattle(true);
+            } else if (player.hp <= 0) {
+                endBattle(false);
+            } else {
+                updateState({ player, enemy, log: gameState.log, isProcessing: false, message: { text: `${card.name} played.`, type: 'success' } });
+            }
+        };
+
+        const endTurn = () => {
+            if (gameState.view !== 'battle' || gameState.isProcessing) return;
+
+            SoundManager.playEndTurn(); // Play sound effect for ending turn
+            updateState({ isProcessing: true });
+            gameState.log.push(`--- Player Turn End ---`);
+
+            // 1. Enemy Turn
+            const { player, enemy } = gameState;
+            const move = enemy.nextMove;
+
+            gameState.log.push(`${enemy.name} uses ${move.type} (${move.value}).`);
+
+            let dmg = 0;
+            let block = 0;
+            let heal = 0;
+
+            switch (move.type) {
+                case 'Attack':
+                    dmg = move.value;
+                    break;
+                case 'Block':
+                    block = move.value;
+                    break;
+                case 'Heal':
+                    heal = move.value;
+                    enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                    break;
+            }
+
+            // Apply Damage to Player
+            if (dmg > 0) {
+                const damageTaken = Math.max(0, dmg - player.shield);
+                player.shield = Math.max(0, player.shield - dmg);
+                player.hp = Math.max(0, player.hp - damageTaken);
+                gameState.log.push(`Player takes ${damageTaken} damage.`);
+                if (damageTaken > 0) SoundManager.playDamage(); // Play damage sound if HP or Shield was reduced
+            }
+
+            // Apply Block to Enemy
+            if (block > 0) {
+                enemy.shield += block;
+                gameState.log.push(`Enemy gains ${block} shield.`);
+            }
+
+            // 2. Check Win/Loss
+            if (player.hp <= 0) {
+                endBattle(false);
+                return;
+            } else if (enemy.hp <= 0) {
+                endBattle(true);
+                return;
+            }
+
+            // 3. Start Next Player Turn
+            setTimeout(() => {
+                gameState.log.push(`--- Enemy Turn End ---`);
+                
+                const moveIndex = Math.floor(Math.random() * gameState.enemy.deck.length);
+                gameState.enemy.nextMove = gameState.enemy.deck[moveIndex];
+
+                startTurn();
+                updateState({ isProcessing: false });
+            }, 1000);
+        };
+
+        const endBattle = (won) => {
+            const { player, currentFloor } = gameState;
+
+            updateState({ isProcessing: false });
+
+            if (!won) {
+                SoundManager.playFailure();
+                gameState.log.push(`Player defeated on Floor ${currentFloor}.`);
+                return endGame(false);
+            }
+            
+            SoundManager.playSuccess(); // Small success fanfare for battle end
+            SoundManager.playReward(); // Play reward sound for winning the battle and transition
+
+            gameState.log.push(`Enemy defeated! Floor ${currentFloor} complete.`);
+
+            if (currentFloor > gameState.maxFloorBeaten) {
+                gameState.maxFloorBeaten = currentFloor;
+                checkUnlocks(true);
+            } else {
+                checkUnlocks(false);
+            }
+
+
+            if (currentFloor === 15) {
+                return endGame(true);
+            }
+
+            const rewardCards = generateRewardCards(3);
+            updateState({
+                view: 'reward',
+                player: { ...player, shield: 0 },
+                rewards: rewardCards,
+                message: { text: "Choose a new card reward!", type: 'success' }
+            });
+        };
+
+        const checkUnlocks = (forceSave) => {
+            let newlyUnlocked = false;
+            CLASS_DEFINITIONS.forEach(cls => {
+                const isDefinedUnlocked = cls.unlocked || gameState.unlockedClasses.includes(cls.id);
+
+                if (!isDefinedUnlocked) {
+                    let shouldUnlock = false;
+                    
+                    const floorNeeded = {
+                        'monk': 1,
+                        'barbarian': 5,
+                        'bard': 7,
+                        'sorcerer': 10,
+                        'warlock': 12,
+                        'rouge': 15
+                    }[cls.id];
+
+                    if (floorNeeded && gameState.maxFloorBeaten >= floorNeeded) {
+                        shouldUnlock = true;
+                    }
+
+                    if (shouldUnlock) {
+                        cls.unlocked = true; 
+                        gameState.unlockedClasses.push(cls.id);
+                        updateState({ message: { text: `${cls.name} class unlocked!`, type: 'success' } });
+                        newlyUnlocked = true;
+                    }
+                } else if (gameState.unlockedClasses.includes(cls.id)) {
+                    cls.unlocked = true;
+                }
+            });
+
+            if (forceSave || newlyUnlocked) {
+                savePersistentState();
+            }
+        };
+
+        const generateRewardCards = (count) => {
+            const baseRewardPool = Object.values(CARDS); 
+            const currentClassId = gameState.currentClass.id;
+            
+            const classFilteredPool = baseRewardPool.filter(card => {
+                const requiredClassId = CLASS_LOCKED_CARDS[card.name];
+                
+                if (!requiredClassId) {
+                    return true;
+                }
+                
+                return requiredClassId === currentClassId;
+            });
+
+            const starterCardNames = ["Strike", "Defend", "Heal", "Heavy Slash", "Fortify"];
+            const nonStarterPool = classFilteredPool.filter(card => !starterCardNames.includes(card.name));
+
+            const rewardPoolToUse = nonStarterPool.length >= count ? nonStarterPool : classFilteredPool;
+            
+            let potentialRewards = [...rewardPoolToUse];
+
+            if (potentialRewards.length === 0) return [];
+
+            const rewards = [];
+            
+            for (let i = 0; i < count && potentialRewards.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * potentialRewards.length);
+                rewards.push(potentialRewards[randomIndex]);
+                potentialRewards.splice(randomIndex, 1);
+            }
+            return rewards;
+        };
+
+        const takeReward = (cardIndex) => {
+            const chosenCard = gameState.rewards[cardIndex];
+            gameState.player.deck.push(chosenCard);
+            gameState.log.push(`Added ${chosenCard.name} to the deck.`);
+            SoundManager.playReward(); // Play reward sound for taking a card
+            updateState({ rewards: [], message: { text: `${chosenCard.name} added! Moving to the next floor.`, type: 'success' } });
+            startFloor();
+        };
+
+        const skipReward = () => {
+            gameState.log.push("Skipped card reward.");
+            updateState({ rewards: [], message: { text: "Card reward skipped. Moving to the next floor.", type: 'info' } });
+            startFloor();
+        };
+
+        const endGame = (won) => {
+            if (won) {
+                SoundManager.playSuccess(); // Grand success fanfare
+                gameState.maxFloorBeaten = Math.max(gameState.maxFloorBeaten, 15);
+            } else {
+                SoundManager.playFailure(); // Failure sound (death)
+                gameState.maxFloorBeaten = Math.max(gameState.maxFloorBeaten, gameState.currentFloor - 1); 
+            }
+            
+            checkUnlocks(true);
+
+            updateState({
+                view: 'run-end',
+                message: {
+                    text: won ?
+                        `Congratulations! You beat Arcane Ascent with the ${gameState.currentClass.name}!` :
+                        `Your run ended on Floor ${gameState.currentFloor}. Better luck next time.`,
+                    type: won ? 'success' : 'error'
+                }
+            });
+        };
+
+        // --- UI Rendering Functions (Single component logic) ---
+
+        const getCardStyle = (type, cost, playable) => {
+            let base = `p-3 m-1 rounded-xl shadow-lg transition-all transform hover:scale-105 border-4 cursor-pointer flex flex-col justify-between h-40 w-32 md:h-52 md:w-40 backdrop-blur-sm bg-opacity-80 `;
+            let typeColor = '';
+
+            switch (type) {
+                case 'Attack': typeColor = 'bg-red-700 border-red-900'; break;
+                case 'Block': typeColor = 'bg-blue-700 border-blue-900'; break;
+                case 'Heal': typeColor = 'bg-green-700 border-green-900'; break;
+                case 'Power': typeColor = 'bg-purple-700 border-purple-900'; break;
+                default: typeColor = 'bg-gray-700 border-gray-900';
+            }
+
+            if (!playable) {
+                base = base.replace('hover:scale-105 cursor-pointer', 'opacity-50 cursor-not-allowed');
+            } else if (gameState.isProcessing) {
+                 base = base.replace('hover:scale-105 cursor-pointer', 'opacity-70 cursor-wait');
+            }
+
+            return base + typeColor;
+        };
+
+        const renderClassSelect = () => {
+            const sortedClasses = CLASS_DEFINITIONS.sort((a, b) => {
+                const aUnlocked = gameState.unlockedClasses.includes(a.id);
+                const bUnlocked = gameState.unlockedClasses.includes(b.id);
+                return (bUnlocked ? 1 : 0) - (aUnlocked ? 1 : 0);
+            });
+
+
+            const classCards = sortedClasses.map(cls => {
+                const isLocked = !gameState.unlockedClasses.includes(cls.id);
+                const currentRequirement = CLASS_DEFINITIONS.find(c => c.id === cls.id)?.requirement || 'Unknown requirement.';
+                const tooltip = isLocked ? `LOCKED: ${currentRequirement}` : 'Click to select.';
+                
+                const unlockedStyle = `bg-gray-800 hover:bg-gray-700 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl cursor-pointer border-4 border-b-8 ${cls.color.replace('bg-', 'border-')}`;
+                const lockedStyle = `bg-gray-800 opacity-40 cursor-not-allowed border-4 border-gray-600`;
+
+                return `
+                    <div
+                        class="relative p-4 w-full h-full rounded-xl shadow-xl flex flex-col justify-between ${isLocked ? lockedStyle : unlockedStyle} text-white"
+                        onclick="${isLocked ? '' : `startGame('${cls.id}')`}"
+                        title="${tooltip}"
+                    >
+                        ${isLocked ? `
+                            <div class="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center rounded-lg p-4">
+                                <span class="text-xl font-bold tracking-wider mb-2">LOCKED</span>
+                                <span class="text-xs text-center text-gray-300 leading-tight">${currentRequirement}</span>
+                            </div>
+                        ` : ''}
+                        
+                        <div>
+                            <div class="text-3xl font-extrabold mb-2">${cls.name}</div>
+                            <div class="text-xs italic text-gray-400 leading-tight h-8">
+                                ${isLocked ? 'Requirement:' : 'Ready to ascend!'}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-xs font-semibold space-y-1">
+                             <p>HP: ${cls.startingHP}</p>
+                             <p>Deck: ${cls.deck.length} cards</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-start p-8">
+                    <div class="text-center mb-10 mt-10 p-4 bg-gray-800/50 rounded-xl shadow-lg border border-purple-600/50">
+                        <h1 class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 tracking-tight">
+                            ARCANE ASCENT
+                        </h1>
+                        <p class="text-gray-400 text-lg mt-2">A Roguelike Card Battler</p>
+                        <p class="text-gray-500 mt-4 text-sm">Max Floor Beaten: <span class="text-yellow-400">${gameState.maxFloorBeaten}</span> | User: ${userId ? userId.substring(0, 8) + '...' : 'N/A'}</p>
+                    </div>
+                    
+                    <h2 class="text-2xl font-semibold text-yellow-400 mb-6 border-b-2 border-yellow-500/50 pb-1">Choose Your Champion</h2>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 max-w-7xl w-full">
+                        ${classCards}
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderCard = (card, index, onClick, playable = true) => {
+            const style = getCardStyle(card.type, getCardCost(card), playable);
+            const costText = getCardCost(card) < card.cost ? `<span class="line-through opacity-70">${card.cost}</span> ${getCardCost(card)}` : card.cost;
+
+            return `
+                <div class="${style}" onclick="${onClick ? `playCard(${index})` : ''}">
+                    <div class="text-xl font-bold flex justify-between items-start">
+                        <span>${card.name}</span>
+                        <span class="text-3xl font-extrabold p-1 rounded-full bg-black bg-opacity-30">${costText}</span>
+                    </div>
+                    <div class="text-center mb-2">
+                        <span class="text-sm font-semibold uppercase">${card.type} ${card.value ? `(${card.value})` : ''}</span>
+                    </div>
+                    <p class="text-xs text-gray-200">${card.description}</p>
+                </div>
+            `;
+        };
+
+        const renderReward = () => {
+            const rewardCards = gameState.rewards.map((card, index) => `
+                <div class="flex flex-col items-center">
+                    ${renderCard(card, index, false, true)}
+                    <button onclick="takeReward(${index})" class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition">
+                        Take Card
+                    </button>
+                </div>
+            `).join('');
+
+            return `
+                <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-white">
+                    <h1 class="text-4xl font-bold mb-6 text-yellow-400">Floor ${gameState.currentFloor} Complete!</h1>
+                    <p class="text-xl mb-8">Choose one card to add to your deck:</p>
+                    <div class="flex flex-wrap justify-center gap-6 mb-8">
+                        ${rewardCards}
+                    </div>
+                    <button onclick="skipReward()" class="px-6 py-3 bg-red-600 text-white rounded-xl shadow-xl hover:bg-red-700 transition transform hover:scale-105">
+                        Skip Reward
+                    </button>
+                </div>
+            `;
+        };
+
+        const renderBattle = () => {
+            const { player, enemy, currentFloor, currentClass } = gameState; 
+
+            const playerHandHTML = player.hand.map((card, index) => {
+                const isClassLocked = CLASS_LOCKED_CARDS[card.name] && CLASS_LOCKED_CARDS[card.name] !== currentClass.id;
+                
+                const playable = getCardCost(card) <= player.energy && !isClassLocked && !gameState.isProcessing;
+
+                return renderCard(card, index, playable ? true : null, playable);
+            }).join('');
+
+            let intentIcon = '';
+            let intentColor = 'text-gray-200';
+            let intentValue = enemy.nextMove?.value || ''; 
+            let intentDesc = enemy.nextMove?.description || 'Determining next move...';
+
+            if (enemy.nextMove) {
+                switch (enemy.nextMove.type) {
+                    case 'Attack':
+                        intentIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>';
+                        intentColor = 'text-red-400';
+                        break;
+                    case 'Block':
+                        intentIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.047A12.01 12.01 0 002 15.405V18a2 2 0 002 2h16a2 2 0 002-2v-2.595a12.01 12.01 0 00-1.382-6.44z" /></svg>';
+                        intentColor = 'text-blue-400';
+                        break;
+                    case 'Heal':
+                        intentIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>';
+                        intentColor = 'text-green-400';
+                        break;
+                }
+            }
+
+
+            const isBoss = currentFloor % 5 === 0;
+
+            return `
+                <div class="min-h-screen bg-gray-800 flex flex-col p-4 text-white font-inter">
+                    <!-- Top Status Bar (Floor & Health) -->
+                    <div class="flex justify-between items-center mb-4 p-4 bg-gray-900 rounded-xl shadow-xl">
+                        <div class="text-lg font-bold">
+                            Floor <span class="text-yellow-400 text-2xl">${currentFloor}</span> / 15 ${isBoss ? '<span class="text-red-500">(BOSS)</span>' : ''}
+                        </div>
+                        <div class="text-sm">
+                            <span class="${gameState.message.type === 'error' ? 'text-red-400' : gameState.message.type === 'success' ? 'text-green-400' : 'text-gray-300'}">
+                                ${gameState.message.text}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Battle Area -->
+                    <div class="flex flex-1 flex-col md:flex-row gap-4 mb-4">
+                        <!-- Enemy Area -->
+                        <div class="flex-1 p-4 bg-gray-700 rounded-xl shadow-inner flex flex-col items-center justify-between min-h-[250px] md:min-h-0">
+                            <div class="relative w-full flex justify-center">
+                                <!-- Intent -->
+                                <div class="absolute -top-6 bg-gray-900 border-4 ${intentColor} p-2 rounded-full shadow-2xl flex items-center justify-center" title="${intentDesc}">
+                                    <span class="text-2xl font-bold mr-1">${intentValue}</span>
+                                    ${intentIcon}
+                                </div>
+                                <div class="text-4xl font-extrabold mt-8 text-red-300">
+                                    ${enemy.name}
+                                </div>
+                            </div>
+
+                            <!-- Enemy Stats -->
+                            <div class="w-full max-w-sm">
+                                <!-- HP Bar -->
+                                <div class="relative h-6 bg-red-900 rounded-full shadow-md overflow-hidden mb-1">
+                                    <div class="absolute h-full bg-red-500 transition-all duration-500" style="width: ${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%;"></div>
+                                    <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">${enemy.hp} / ${enemy.maxHp} HP</span>
+                                </div>
+                                <!-- Shield -->
+                                ${enemy.shield > 0 ? `<div class="text-center text-blue-300 font-bold text-lg p-1 bg-blue-900 rounded-lg shadow-inner">Shield: ${enemy.shield}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Battle Log / Info -->
+                        <div class="md:w-1/3 p-4 bg-gray-700 rounded-xl shadow-inner flex flex-col">
+                            <h3 class="text-xl font-bold mb-2 border-b border-gray-600 pb-1">Battle Log</h3>
+                            <div id="battle-log" class="flex-1 overflow-y-auto text-sm space-y-1 custom-scrollbar" style="max-height: 200px; min-height: 100px;">
+                                ${gameState.log.slice(-10).reverse().map(l => `<p class="text-gray-300">${l}</p>`).join('')}
+                            </div>
+
+                            <h3 class="text-xl font-bold mt-4 mb-2 border-b border-gray-600 pb-1">${currentClass.name} Status</h3>
+                            <p class="text-sm">Deck: ${player.deck.length} | Discard: ${player.discard.length} | Exhaust: ${player.exhaust.length}</p>
+                            ${player.powers.darkPactBoost > 0 ? `<p class="text-sm text-purple-400">Power: +${player.powers.darkPactBoost} Energy (Next Turn)</p>` : ''}
+                            ${player.powers.metamagicDiscount > 0 ? `<p class="text-sm text-cyan-400">Power: -${player.powers.metamagicDiscount} Energy Cost (Next Card)</p>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Player Area -->
+                    <div class="p-4 bg-gray-900 rounded-xl shadow-2xl">
+                        <!-- Player Stats -->
+                        <div class="flex justify-between items-center mb-4">
+                            <!-- Energy -->
+                            <div class="flex items-center text-3xl font-extrabold text-yellow-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M13 1.5L9 9h3v12l4-8h-3l3-7.5z"/></svg>
+                                <span>${player.energy} / ${player.maxEnergy}</span>
+                            </div>
+                            <!-- HP Bar -->
+                            <div class="w-1/2 md:w-1/3">
+                                <div class="relative h-8 bg-green-900 rounded-full shadow-md overflow-hidden mb-1">
+                                    <div class="absolute h-full bg-green-500 transition-all duration-500" style="width: ${Math.max(0, (player.hp / player.maxHp) * 100)}%;"></div>
+                                    <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-black">${player.hp} / ${player.maxHp} HP</span>
+                                </div>
+                                <!-- Shield -->
+                                ${player.shield > 0 ? `<div class="text-center text-blue-300 font-bold text-xl p-1 bg-blue-900 rounded-lg shadow-inner">Shield: ${player.shield}</div>` : ''}
+                            </div>
+                            <!-- End Turn Button -->
+                            <button
+                                onclick="endTurn()"
+                                class="px-6 py-3 bg-indigo-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-105 hover:bg-indigo-700 font-bold text-lg disabled:opacity-50"
+                                ${gameState.isProcessing ? 'disabled' : ''}
+                            >
+                                End Turn
+                            </button>
+                        </div>
+
+                        <!-- Player Hand -->
+                        <div class="flex flex-wrap justify-center gap-2">
+                            ${playerHandHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderRunEnd = () => {
+            const won = gameState.currentFloor >= 15 && gameState.player.hp > 0;
+            const title = won ? 'VICTORY ASCENDED!' : 'RUN FAILED...';
+            const bgColor = won ? 'bg-green-900' : 'bg-red-900';
+            const textColor = won ? 'text-green-300' : 'text-red-300';
+
+            return `
+                <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-white">
+                    <div class="${bgColor} p-10 rounded-xl shadow-2xl text-center max-w-lg w-full">
+                        <h1 class="text-6xl font-extrabold mb-4 ${textColor}">${title}</h1>
+                        <p class="text-xl mb-6 text-gray-200">${gameState.message.text}</p>
+                        <p class="text-lg font-semibold mb-8">Final Floor Reached: ${gameState.currentFloor}</p>
+                        <button onclick="updateState({ view: 'class-select', currentFloor: 0, message: { text: '', type: '' } })"
+                                class="px-8 py-4 bg-yellow-600 text-gray-900 rounded-xl shadow-xl transition-all transform hover:scale-105 hover:bg-yellow-500 font-bold text-xl">
+                            Start New Run
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+
+        const renderLoading = () => {
+            return `
+                <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-white">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-500"></div>
+                    <p class="mt-4 text-lg">Initializing reality and loading persistence...</p>
+                </div>
+            `;
+        };
+
+        const render = () => {
+            const appDiv = document.getElementById('app');
+            if (!appDiv) return;
+
+            let content = '';
+
+            switch (gameState.view) {
+                case 'loading':
+                    content = renderLoading();
+                    break;
+                case 'class-select':
+                    content = renderClassSelect();
+                    break;
+                case 'battle':
+                    content = renderBattle();
+                    break;
+                case 'reward':
+                    content = renderReward();
+                    break;
+                case 'run-end':
+                    content = renderRunEnd();
+                    break;
+                case 'map':
+                    startFloor();
+                    return;
+                default:
+                    content = `<div class="p-8 text-red-500">Error: Unknown game view: ${gameState.view}</div>`;
+            }
+
+            appDiv.innerHTML = content;
+        };
+
+        // --- Initialization ---
+        window.startGame = startGame;
+        window.playCard = playCard;
+        window.endTurn = endTurn;
+        window.takeReward = takeReward;
+        window.skipReward = skipReward;
+        window.updateState = updateState;
+        window.gameState = gameState;
+
+        document.addEventListener('DOMContentLoaded', initFirebase);
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Tailwind gray-900 equivalent */
+        }
+        /* Custom scrollbar for log */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #4b5563; /* Tailwind gray-600 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #9ca3af; /* Tailwind gray-400 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* Tailwind gray-500 */
+        }
+        .custom-scrollbar {
+            scrollbar-color: #9ca3af #4b5563;
+            scrollbar-width: thin;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Content will be rendered here by JavaScript -->
+    </div>
+</body>
+</html>
