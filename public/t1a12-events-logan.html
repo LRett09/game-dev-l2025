@@ -1,9 +1,12 @@
 <!--Make at least 8 HTML events using different HTML tags-->
 <h1>t1a12-events-logan</h1>
 
-<button onclick="{console.log('hi')}">ctrl-shft-i for console</button><br><br>
+<button onClick="{console.log('hi')}">ctrl-shft-i for console</button><br><br>
 
-<input type=button value="mouseOver" onMouseOver="{this.style.backgroundColor='green'}"> <br>
+<input type=button value="mouseOver" onMouseOver="{this.style.backgroundColor='green'}"> <br><br>
 
 <input type="text" value="Click here to focus" 
-    onfocus="{this.style.backgroundColor='yellow'; console.log('Input focused!')}">
+    onFocus="{this.style.backgroundColor='yellow'; console.log('Input focused!')}"><br><br>
+
+<input type="text" value="Click outside to blur" style="background-color: yellow;" 
+    onBlur="{this.style.backgroundColor='white'; console.log('Input blurred!')}">
