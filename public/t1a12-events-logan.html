@@ -9,4 +9,9 @@
     onFocus="{this.style.backgroundColor='yellow'; console.log('Input focused!')}"><br><br>
 
 <input type="text" value="Click outside to blur" style="background-color: yellow;" 
-    onBlur="{this.style.backgroundColor='white'; console.log('Input blurred!')}">
+    onBlur="{this.style.backgroundColor='white'; console.log('Input blurred!')}"><br><br>
+
+<div style="width: 200 px; height: 100 px; background-color: lightblue; text-align: center; line-height: 100 px;" 
+    onwheel="this.style.backgroundColor = 'lightcoral'; setTimeout(() => this.style.backgroundColor = 'lightblue', 100); console.log('Wheel event fired!');">
+    Scroll over me!
+</div>
