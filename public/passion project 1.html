@@ -25,6 +25,32 @@
         let userId = null;
         let isAuthReady = false;
         
+        let battleStats = {
+            turnsTaken: 0,
+            totalDamageDealt: 0,
+            totalCardsDrawn: 0,
+            damageTaken: 0,
+            playedAttackCards: 0,
+            playedCardsOverOneCost: 0,
+            usedAllEnergyTurns: 0,
+            totalTurns: 0, // Used for Warlock check
+            minHpReached: 0,
+        };
+
+        const resetBattleStats = (maxHp) => {
+            battleStats = {
+                turnsTaken: 0,
+                totalDamageDealt: 0,
+                totalCardsDrawn: 0,
+                damageTaken: 0,
+                playedAttackCards: 0,
+                playedCardsOverOneCost: 0,
+                usedAllEnergyTurns: 0,
+                totalTurns: 0, 
+                minHpReached: maxHp, 
+            };
+        };
+
         // --- Sound Manager ---
         const SoundManager = {
             synth: null,
@@ -118,7 +144,6 @@
             "Meditate": "monk",
             "Chaos Bolt": "sorcerer",
             "Metamagic": "sorcerer",
-            // NEW CLASSES
             "Hunter's Mark": "ranger",
             "Vanish": "ranger",
             "Quick Shot": "ranger",
@@ -223,28 +248,35 @@
             ],
         };
 
+        // NEW CHALLENGE REQUIREMENTS
+        const UNLOCK_REQUIREMENTS = {
+            'paladin': { type: 'BATTLE_STAT', req: 'No Damage Taken', condition: (stats) => stats.damageTaken === 0 },
+            'monk': { type: 'BATTLE_STAT', req: 'Defeat a Boss without playing an Attack card.', condition: (stats, floor) => (floor % 5 === 0) && stats.playedAttackCards === 0 },
+            'druid': { type: 'BATTLE_STAT', req: 'Win a battle in 3 turns or less.', condition: (stats) => stats.turnsTaken <= 3 },
+            'barbarian': { type: 'BATTLE_STAT', req: 'Deal 50+ total damage in a single battle.', condition: (stats) => stats.totalDamageDealt >= 50 },
+            'bard': { type: 'BATTLE_STAT', req: 'Win a battle using only cards that cost 1 or less.', condition: (stats) => stats.playedCardsOverOneCost === 0 },
+            'sorcerer': { type: 'BATTLE_STAT', req: 'Win a battle with 5 or less HP remaining.', condition: (stats) => stats.minHpReached <= 5 },
+            'warlock': { type: 'BATTLE_STAT', req: 'Win a battle using all Energy on every turn.', condition: (stats) => stats.totalTurns > 0 && stats.usedAllEnergyTurns === stats.totalTurns },
+            'wizard': { type: 'BATTLE_STAT', req: 'Win a battle after drawing 10+ cards total.', condition: (stats) => stats.totalCardsDrawn >= 10 },
+            'rouge': { type: 'FLOOR', req: 'Complete a full run (Defeat the final Boss - Floor 15).', condition: (floor) => floor >= 15 },
+        };
+
         const CLASS_DEFINITIONS = [
             // Starting Classes
             { id: 'fighter', name: 'Fighter', color: 'bg-red-600', startingHP: 80, deck: STARTING_DECKS.fighter, unlocked: true, requirement: 'The starting class.' },
             { id: 'cleric', name: 'Cleric', color: 'bg-yellow-500', startingHP: 70, deck: STARTING_DECKS.cleric, unlocked: true, requirement: 'The starting class.' },
-            // NEW: Ranger starts unlocked
             { id: 'ranger', name: 'Ranger', color: 'bg-green-700', startingHP: 75, deck: STARTING_DECKS.ranger, unlocked: true, requirement: 'The starting class.' },
             
-            // New Unlocks
-            { id: 'paladin', name: 'Paladin', color: 'bg-indigo-500', startingHP: 85, deck: STARTING_DECKS.paladin, unlocked: false, requirement: 'Defeat Floor 3.' },
-            { id: 'druid', name: 'Druid', color: 'bg-emerald-600', startingHP: 70, deck: STARTING_DECKS.druid, unlocked: false, requirement: 'Reach Floor 6.' },
-            
-            // Re-tuned existing Unlocks
-            { id: 'monk', name: 'Monk', color: 'bg-orange-500', startingHP: 75, deck: STARTING_DECKS.monk, unlocked: false, requirement: 'Defeat the first Boss (Floor 5).' },
-            { id: 'barbarian', name: 'Barbarian', color: 'bg-red-800', startingHP: 90, deck: STARTING_DECKS.barbarian, unlocked: false, requirement: 'Reach Floor 8.' },
-            { id: 'bard', name: 'Bard', color: 'bg-pink-500', startingHP: 68, deck: STARTING_DECKS.bard, unlocked: false, requirement: 'Reach Floor 10.' },
-            
-            // High Tier Unlocks
-            { id: 'sorcerer', name: 'Sorcerer', color: 'bg-cyan-700', startingHP: 65, deck: STARTING_DECKS.sorcerer, unlocked: false, requirement: 'Defeat the second Boss (Floor 10).' },
-            { id: 'warlock', name: 'Warlock', color: 'bg-purple-800', startingHP: 65, deck: STARTING_DECKS.warlock, unlocked: false, requirement: 'Reach Floor 13.' },
-            // NEW: Wizard (tough unlock)
-            { id: 'wizard', name: 'Wizard', color: 'bg-blue-600', startingHP: 60, deck: STARTING_DECKS.wizard, unlocked: false, requirement: 'Reach Floor 14.' },
-            { id: 'rouge', name: 'Rogue', color: 'bg-gray-800', startingHP: 75, deck: STARTING_DECKS.rouge, unlocked: false, requirement: 'Complete a run (Defeat the final Boss - Floor 15).' },
+            // Challenge Unlocks
+            { id: 'paladin', name: 'Paladin', color: 'bg-indigo-500', startingHP: 85, deck: STARTING_DECKS.paladin, unlocked: false, requirement: UNLOCK_REQUIREMENTS.paladin.req },
+            { id: 'druid', name: 'Druid', color: 'bg-emerald-600', startingHP: 70, deck: STARTING_DECKS.druid, unlocked: false, requirement: UNLOCK_REQUIREMENTS.druid.req },
+            { id: 'monk', name: 'Monk', color: 'bg-orange-500', startingHP: 75, deck: STARTING_DECKS.monk, unlocked: false, requirement: UNLOCK_REQUIREMENTS.monk.req },
+            { id: 'barbarian', name: 'Barbarian', color: 'bg-red-800', startingHP: 90, deck: STARTING_DECKS.barbarian, unlocked: false, requirement: UNLOCK_REQUIREMENTS.barbarian.req },
+            { id: 'bard', name: 'Bard', color: 'bg-pink-500', startingHP: 68, deck: STARTING_DECKS.bard, unlocked: false, requirement: UNLOCK_REQUIREMENTS.bard.req },
+            { id: 'sorcerer', name: 'Sorcerer', color: 'bg-cyan-700', startingHP: 65, deck: STARTING_DECKS.sorcerer, unlocked: false, requirement: UNLOCK_REQUIREMENTS.sorcerer.req },
+            { id: 'warlock', name: 'Warlock', color: 'bg-purple-800', startingHP: 65, deck: STARTING_DECKS.warlock, unlocked: false, requirement: UNLOCK_REQUIREMENTS.warlock.req },
+            { id: 'wizard', name: 'Wizard', color: 'bg-blue-600', startingHP: 60, deck: STARTING_DECKS.wizard, unlocked: false, requirement: UNLOCK_REQUIREMENTS.wizard.req },
+            { id: 'rouge', name: 'Rogue', color: 'bg-gray-800', startingHP: 75, deck: STARTING_DECKS.rouge, unlocked: false, requirement: UNLOCK_REQUIREMENTS.rouge.req },
         ];
 
         const ENEMY_MOVES = {
@@ -292,10 +324,11 @@
             hand: [],
             isProcessing: false,
             // Persistent data (from Firestore)
-            unlockedClasses: ['fighter', 'cleric', 'ranger'], // Ranger starts unlocked
+            unlockedClasses: ['fighter', 'cleric', 'ranger'], 
             maxFloorBeaten: 0,
             rewards: [], // Current reward choices
-            message: { text: '', type: '' } // 'success', 'error', 'info'
+            message: { text: '', type: '' }, // 'success', 'error', 'info'
+            unlockNotification: null // NEW: Stores { id, name, color, reason } if a class was just unlocked
         };
 
         const updateState = (newState) => {
@@ -347,7 +380,7 @@
                     gameState.unlockedClasses = [...new Set([...defaultUnlocks, ...loadedUnlocks])];
                     gameState.maxFloorBeaten = maxFloor;
                     
-                    checkUnlocks(false); 
+                    checkClassDefinitions(); // Ensure CLASS_DEFINITIONS reflects loaded unlocks
                     
                     if (gameState.view === 'loading') {
                         updateState({ view: 'class-select' });
@@ -366,6 +399,14 @@
                     updateState({ view: 'class-select' });
                 }
             }
+        };
+
+        const checkClassDefinitions = () => {
+            CLASS_DEFINITIONS.forEach(cls => {
+                if (gameState.unlockedClasses.includes(cls.id)) {
+                    cls.unlocked = true;
+                }
+            });
         };
 
 
@@ -416,7 +457,7 @@
         const shuffle = (array) => {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                // Correct element swapping (Bug fix from previous iteration)
+                // Correct element swapping
                 [array[i], array[j]] = [array[j], array[i]]; 
             }
         };
@@ -465,6 +506,7 @@
                     drawnCount++;
                 }
             }
+            battleStats.totalCardsDrawn += drawnCount;
             return drawnCount;
         };
 
@@ -498,12 +540,15 @@
                     exhaust: [],
                     energy: 3,
                     maxEnergy: 3,
-                    powers: { darkPactBoost: 0, metamagicDiscount: 0, huntersMark: 0 } // Added huntersMark
+                    powers: { darkPactBoost: 0, metamagicDiscount: 0, huntersMark: 0 }
                 },
                 log: [],
                 rewards: [],
-                message: { text: `Run started with ${selectedClass.name}.`, type: 'success' }
+                message: { text: `Run started with ${selectedClass.name}.`, type: 'success' },
+                unlockNotification: null // Clear any prior notification
             });
+
+            resetBattleStats(selectedClass.startingHP);
             startFloor();
         };
 
@@ -519,6 +564,9 @@
             const moveIndex = Math.floor(Math.random() * newEnemy.deck.length);
             newEnemy.nextMove = newEnemy.deck[moveIndex];
 
+            // Reset battle stats for a new fight
+            resetBattleStats(gameState.player.maxHp); 
+
             updateState({
                 view: 'battle',
                 currentFloor: nextFloor,
@@ -532,6 +580,16 @@
 
         const startTurn = () => {
             const { player } = gameState;
+
+            battleStats.turnsTaken++;
+            
+            // Check Warlock challenge for *previous* turn: did player use all energy?
+            if (battleStats.totalTurns > 0) {
+                 if (player.energy === 0) {
+                    battleStats.usedAllEnergyTurns++;
+                 }
+            }
+            battleStats.totalTurns++;
 
             resetAndShuffleDeck(player); // Now handles Retain mechanic
 
@@ -556,6 +614,9 @@
         
         // Helper function to handle battle end and UI update after card play
         const checkEndBattleAndContinue = (playedCard) => {
+             // Update min HP reached
+             battleStats.minHpReached = Math.min(battleStats.minHpReached, gameState.player.hp);
+
              // 1. Check win/loss condition
             if (gameState.enemy.hp <= 0) {
                 endBattle(true);
@@ -571,7 +632,7 @@
             const card = player.hand[cardIndex];
             const actualCost = getCardCost(card);
 
-            if (gameState.isProcessing) return;
+            if (gameState.isProcessing || gameState.unlockNotification) return;
 
             // --- CRITICAL CLASS RESTRICTION CHECK (Runtime enforcement) ---
             const requiredClassId = CLASS_LOCKED_CARDS[card.name];
@@ -595,6 +656,9 @@
             updateState({ isProcessing: true });
             player.energy -= actualCost;
 
+            // Record stats for challenges
+            if (card.cost > 1) { battleStats.playedCardsOverOneCost++; }
+
             if (actualCost < card.cost) {
                 player.powers.metamagicDiscount = 0;
             }
@@ -614,6 +678,7 @@
                 case 'Attack': 
                     SoundManager.playAttack();
                     dmg = card.value; 
+                    battleStats.playedAttackCards++;
 
                     // Special Attack effects
                     if (card.name === 'Blood Rage') { selfDmg = 2; }
@@ -632,6 +697,7 @@
                             totalDmg += damageDealt;
                             if (player.powers.huntersMark > 0) { player.powers.huntersMark--; }
                         }
+                        battleStats.totalDamageDealt += totalDmg;
                         gameState.log.push(`Enemy takes ${totalDmg} damage from 3 missiles.`);
                         
                         const playedCard = player.hand.splice(cardIndex, 1)[0];
@@ -672,9 +738,8 @@
             // Apply Self Damage
             if (selfDmg > 0) {
                 player.hp = Math.max(0, player.hp - selfDmg);
+                battleStats.damageTaken += selfDmg; // Self-damage counts against no-damage challenge
                 gameState.log.push(`Player takes ${selfDmg} damage from ${card.name}.`);
-                // FIX: This call to playDamage immediately follows another sound call (playAttack or playPower)
-                // The fix is now handled within playDamage itself by using a robust time offset.
                 SoundManager.playDamage(); 
             }
             
@@ -683,6 +748,7 @@
                 const damageDealt = Math.max(0, dmg - enemy.shield);
                 enemy.shield = Math.max(0, enemy.shield - dmg);
                 enemy.hp = Math.max(0, enemy.hp - damageDealt);
+                battleStats.totalDamageDealt += damageDealt;
                 gameState.log.push(`Enemy takes ${damageDealt} damage.`);
             }
 
@@ -724,11 +790,14 @@
         };
 
         const endTurn = () => {
-            if (gameState.view !== 'battle' || gameState.isProcessing) return;
+            if (gameState.view !== 'battle' || gameState.isProcessing || gameState.unlockNotification) return;
 
             SoundManager.playEndTurn(); // Play sound effect for ending turn
             updateState({ isProcessing: true });
             gameState.log.push(`--- Player Turn End ---`);
+            
+            // Update min HP reached before enemy attack
+            battleStats.minHpReached = Math.min(battleStats.minHpReached, gameState.player.hp);
 
             // 1. Enemy Turn
             const { player, enemy } = gameState;
@@ -758,8 +827,13 @@
                 const damageTaken = Math.max(0, dmg - player.shield);
                 player.shield = Math.max(0, player.shield - dmg);
                 player.hp = Math.max(0, player.hp - damageTaken);
+                
+                if (damageTaken > 0) {
+                    battleStats.damageTaken += damageTaken;
+                    SoundManager.playDamage(); // Play damage sound if HP or Shield was reduced
+                }
+
                 gameState.log.push(`Player takes ${damageTaken} damage.`);
-                if (damageTaken > 0) SoundManager.playDamage(); // Play damage sound if HP or Shield was reduced
             }
 
             // Apply Block to Enemy
@@ -776,6 +850,10 @@
                 endBattle(true);
                 return;
             }
+            
+            // Update min HP reached after enemy attack
+            battleStats.minHpReached = Math.min(battleStats.minHpReached, gameState.player.hp);
+
 
             // 3. Start Next Player Turn
             setTimeout(() => {
@@ -789,6 +867,58 @@
             }, 1000);
         };
 
+        const checkBattleChallenges = () => {
+            let newlyUnlocked = false;
+
+            const classesToCheck = CLASS_DEFINITIONS.filter(cls => !cls.unlocked && UNLOCK_REQUIREMENTS[cls.id]?.type === 'BATTLE_STAT');
+
+            classesToCheck.forEach(cls => {
+                const unlockConfig = UNLOCK_REQUIREMENTS[cls.id];
+
+                // Execute the condition function with battleStats and currentFloor
+                if (unlockConfig.condition(battleStats, gameState.currentFloor)) {
+                    cls.unlocked = true;
+                    gameState.unlockedClasses.push(cls.id);
+                    
+                    // NEW: Set the notification object
+                    gameState.unlockNotification = {
+                        id: cls.id,
+                        name: cls.name,
+                        color: cls.color,
+                        reason: cls.requirement
+                    };
+
+                    newlyUnlocked = true;
+                    SoundManager.playReward(); // Play a special reward sound for an unlock
+                }
+            });
+
+            return newlyUnlocked;
+        };
+
+        const checkFloorUnlocks = () => {
+            let newlyUnlocked = false;
+            // Check Rogue unlock (tied to max floor beaten)
+            const rogueClass = CLASS_DEFINITIONS.find(c => c.id === 'rouge');
+            if (!rogueClass.unlocked && UNLOCK_REQUIREMENTS.rouge.condition(gameState.maxFloorBeaten)) {
+                rogueClass.unlocked = true;
+                gameState.unlockedClasses.push('rouge');
+                
+                // NEW: Set the notification object
+                gameState.unlockNotification = {
+                    id: rogueClass.id,
+                    name: rogueClass.name,
+                    color: rogueClass.color,
+                    reason: rogueClass.requirement
+                };
+                
+                newlyUnlocked = true;
+                SoundManager.playReward(); 
+            }
+
+            return newlyUnlocked;
+        };
+
         const endBattle = (won) => {
             const { player, currentFloor } = gameState;
 
@@ -800,74 +930,43 @@
                 return endGame(false);
             }
             
-            SoundManager.playSuccess(); // Small success fanfare for battle end
-            SoundManager.playReward(); // Play reward sound for winning the battle and transition
-
+            // Check for challenge unlocks *before* proceeding
+            const challengeUnlocked = checkBattleChallenges();
+            const floorUnlocked = checkFloorUnlocks();
+            
+            // Only play standard success if no major unlock happened
+            if (!challengeUnlocked && !floorUnlocked) {
+                 SoundManager.playSuccess(); 
+            }
+            
             gameState.log.push(`Enemy defeated! Floor ${currentFloor} complete.`);
 
             if (currentFloor > gameState.maxFloorBeaten) {
                 gameState.maxFloorBeaten = currentFloor;
-                checkUnlocks(true);
-            } else {
-                checkUnlocks(false);
             }
-
+            
+            savePersistentState(); // Save after any potential unlocks
 
             if (currentFloor === 15) {
                 return endGame(true);
             }
-
-            const rewardCards = generateRewardCards(3);
-            updateState({
-                view: 'reward',
-                player: { ...player, shield: 0 },
-                rewards: rewardCards,
-                message: { text: "Choose a new card reward!", type: 'success' }
-            });
-        };
-
-        const checkUnlocks = (forceSave) => {
-            let newlyUnlocked = false;
             
-            // Map of class ID to the required floor number
-            const floorRequirements = {
-                'paladin': 3,       // NEW
-                'monk': 5,          // Boss 1
-                'druid': 6,         // NEW
-                'barbarian': 8,
-                'bard': 10,
-                'sorcerer': 10,     // Same as bard, but tied to Boss 2 for consistency
-                'warlock': 13,
-                'wizard': 14,       // NEW
-                'rouge': 15         // Final Boss
-            };
-
-            CLASS_DEFINITIONS.forEach(cls => {
-                const isDefinedUnlocked = cls.unlocked || gameState.unlockedClasses.includes(cls.id);
-                
-                // Ranger starts unlocked and is in defaultUnlocks, so this handles it fine.
-                if (!isDefinedUnlocked) {
-                    let shouldUnlock = false;
-                    
-                    const floorNeeded = floorRequirements[cls.id];
-
-                    if (floorNeeded && gameState.maxFloorBeaten >= floorNeeded) {
-                        shouldUnlock = true;
-                    }
-
-                    if (shouldUnlock) {
-                        cls.unlocked = true; 
-                        gameState.unlockedClasses.push(cls.id);
-                        updateState({ message: { text: `${cls.name} class unlocked!`, type: 'success' } });
-                        newlyUnlocked = true;
-                    }
-                } else if (gameState.unlockedClasses.includes(cls.id)) {
-                    cls.unlocked = true;
-                }
-            });
-
-            if (forceSave || newlyUnlocked) {
-                savePersistentState();
+            // If a notification is showing, we wait for the player to close it before going to rewards
+            if (gameState.unlockNotification) {
+                 updateState({
+                     view: 'battle', // Keep view as battle while modal is up
+                     player: { ...player, shield: 0 },
+                     rewards: generateRewardCards(3),
+                 });
+            } else {
+                 // Proceed directly to rewards
+                const rewardCards = generateRewardCards(3);
+                updateState({
+                    view: 'reward',
+                    player: { ...player, shield: 0 },
+                    rewards: rewardCards,
+                    message: { text: "Choose a new card reward!", type: 'success' }
+                });
             }
         };
 
@@ -930,7 +1029,8 @@
                 gameState.maxFloorBeaten = Math.max(gameState.maxFloorBeaten, gameState.currentFloor - 1); 
             }
             
-            checkUnlocks(true);
+            checkFloorUnlocks(); // Final check for Rogue unlock
+            savePersistentState();
 
             updateState({
                 view: 'run-end',
@@ -941,6 +1041,19 @@
                     type: won ? 'success' : 'error'
                 }
             });
+        };
+        
+        const closeUnlockModal = () => {
+            const oldNotification = gameState.unlockNotification;
+            gameState.unlockNotification = null; // Clear the modal data
+            
+            // If the unlock happened right after a battle, transition to the reward screen now
+            if (gameState.view === 'battle' && gameState.enemy.hp <= 0 && gameState.rewards.length > 0) {
+                 updateState({ view: 'reward', message: { text: `Class ${oldNotification.name} unlocked! Now choose your card reward.`, type: 'success' } });
+            } else {
+                 // Otherwise, just update the battle screen / class select screen
+                 updateState({ message: { text: `The ${oldNotification.name} class is now available for new runs!`, type: 'success' } });
+            }
         };
 
         // --- UI Rendering Functions (Single component logic) ---
@@ -959,7 +1072,7 @@
 
             if (!playable) {
                 base = base.replace('hover:scale-105 cursor-pointer', 'opacity-50 cursor-not-allowed');
-            } else if (gameState.isProcessing) {
+            } else if (gameState.isProcessing || gameState.unlockNotification) {
                  base = base.replace('hover:scale-105 cursor-pointer', 'opacity-70 cursor-wait');
             }
 
@@ -967,10 +1080,10 @@
         };
 
         const renderClassSelect = () => {
+            // Sort: Unlocked first, then by name
             const sortedClasses = CLASS_DEFINITIONS.sort((a, b) => {
                 const aUnlocked = gameState.unlockedClasses.includes(a.id);
                 const bUnlocked = gameState.unlockedClasses.includes(b.id);
-                // Sort unlocked classes first, then by name
                 if (aUnlocked && !bUnlocked) return -1;
                 if (!aUnlocked && bUnlocked) return 1;
                 return a.name.localeCompare(b.name);
@@ -979,7 +1092,7 @@
 
             const classCards = sortedClasses.map(cls => {
                 const isLocked = !gameState.unlockedClasses.includes(cls.id);
-                const currentRequirement = CLASS_DEFINITIONS.find(c => c.id === cls.id)?.requirement || 'Unknown requirement.';
+                const currentRequirement = cls.requirement;
                 const tooltip = isLocked ? `LOCKED: ${currentRequirement}` : 'Click to select.';
                 
                 const unlockedStyle = `bg-gray-800 hover:bg-gray-700 transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl cursor-pointer border-4 border-b-8 ${cls.color.replace('bg-', 'border-')}`;
@@ -1001,7 +1114,7 @@
                         <div>
                             <div class="text-3xl font-extrabold mb-2">${cls.name}</div>
                             <div class="text-xs italic text-gray-400 leading-tight h-8">
-                                ${isLocked ? 'Requirement:' : 'Ready to ascend!'}
+                                ${isLocked ? 'Challenge:' : 'Ready to ascend!'}
                             </div>
                         </div>
                         
@@ -1081,7 +1194,7 @@
             const playerHandHTML = player.hand.map((card, index) => {
                 const isClassLocked = CLASS_LOCKED_CARDS[card.name] && CLASS_LOCKED_CARDS[card.name] !== currentClass.id;
                 
-                const playable = getCardCost(card) <= player.energy && !isClassLocked && !gameState.isProcessing;
+                const playable = getCardCost(card) <= player.energy && !isClassLocked && !gameState.isProcessing && !gameState.unlockNotification;
 
                 return renderCard(card, index, playable ? true : null, playable);
             }).join('');
@@ -1170,6 +1283,10 @@
                             ${player.powers.darkPactBoost > 0 ? `<p class="text-sm text-purple-400">Power: +${player.powers.darkPactBoost} Energy (Next Turn)</p>` : ''}
                             ${player.powers.metamagicDiscount > 0 ? `<p class="text-sm text-cyan-400">Power: -${player.powers.metamagicDiscount} Energy Cost (Next Card)</p>` : ''}
                             ${player.powers.huntersMark > 0 ? `<p class="text-sm text-green-400">Power: +2 Damage to next ${player.powers.huntersMark} attacks.</p>` : ''}
+                            
+                            <h3 class="text-xl font-bold mt-4 mb-2 border-b border-gray-600 pb-1">Current Battle Stats</h3>
+                            <p class="text-sm text-gray-400">Turns: ${battleStats.turnsTaken} | Damage Dealt: ${battleStats.totalDamageDealt}</p>
+                            <p class="text-sm text-gray-400">HP Min: ${battleStats.minHpReached} | Damage Taken: ${battleStats.damageTaken}</p>
                         </div>
                     </div>
 
@@ -1195,7 +1312,7 @@
                             <button
                                 onclick="endTurn()"
                                 class="px-6 py-3 bg-indigo-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-105 hover:bg-indigo-700 font-bold text-lg disabled:opacity-50"
-                                ${gameState.isProcessing ? 'disabled' : ''}
+                                ${gameState.isProcessing || gameState.unlockNotification ? 'disabled' : ''}
                             >
                                 End Turn
                             </button>
@@ -1240,6 +1357,47 @@
                 </div>
             `;
         };
+        
+        const renderUnlockModal = () => {
+            const notification = gameState.unlockNotification;
+            if (!notification) return '';
+            
+            // Extract base color from Tailwind class (e.g., 'bg-red-600' -> 'red-600')
+            const colorClass = notification.color.replace('bg-', '');
+            
+            return `
+                <!-- Modal Overlay -->
+                <div class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <!-- Modal Content -->
+                    <div class="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 border-4 border-${colorClass} transform scale-100 transition-transform duration-300">
+                        
+                        <h2 class="text-4xl font-extrabold mb-4 text-${colorClass.split('-')[0]}-400 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.03-2.03a5.5 5.5 0 017.78 7.78L17 12l-5.464 5.464a1 1 0 01-.707.293H7.5M12 8a4 4 0 014 4v2" /></svg>
+                            NEW CLASS UNLOCKED!
+                        </h2>
+                        
+                        <div class="text-center mb-6">
+                            <p class="text-3xl font-bold text-white mb-2">${notification.name}</p>
+                            <p class="text-lg text-yellow-300 border-t border-b border-gray-600 py-2 italic">
+                                Challenge Completed:
+                            </p>
+                            <p class="text-xl text-gray-200 mt-2 font-semibold">
+                                "${notification.reason}"
+                            </p>
+                        </div>
+                        
+                        <p class="text-center text-sm text-gray-400 mb-6">
+                            The **${notification.name}** is now available in the Class Selection screen for all future runs.
+                        </p>
+
+                        <button onclick="closeUnlockModal()" 
+                                class="w-full py-3 bg-${colorClass} text-white font-bold text-lg rounded-xl shadow-lg transition-all transform hover:scale-[1.02]">
+                            AWESOME! (Continue)
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
 
         const render = () => {
             const appDiv = document.getElementById('app');
@@ -1271,6 +1429,14 @@
             }
 
             appDiv.innerHTML = content;
+            
+            // NEW: Render the modal on top if a notification is pending
+            if (gameState.unlockNotification) {
+                // We use document.body.appendChild to ensure the z-index works over all other content
+                const modalWrapper = document.createElement('div');
+                modalWrapper.innerHTML = renderUnlockModal();
+                appDiv.appendChild(modalWrapper.firstChild);
+            }
         };
 
         // --- Initialization ---
@@ -1280,6 +1446,7 @@
         window.takeReward = takeReward;
         window.skipReward = skipReward;
         window.updateState = updateState;
+        window.closeUnlockModal = closeUnlockModal; // Expose the new function
         window.gameState = gameState;
 
         document.addEventListener('DOMContentLoaded', initFirebase);
