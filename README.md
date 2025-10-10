@@ -233,8 +233,8 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Thursday Oct 9th, 2025</summary>
 
 ### Title
-1.
-1.
+1. Started events (t1a12)
+1. 
 1.
 
 </details>
@@ -242,8 +242,8 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Friday Oct 10th, 2025</summary>
 
 ### Title
-1.
-1.
+1. Finished events
+1. Struggled to make Gemini to not try and destroy its own projects
 1.
 
 </details>
