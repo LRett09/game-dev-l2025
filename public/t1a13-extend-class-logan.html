@@ -27,26 +27,23 @@
   <h4> Example extending Class code</h4>
  <script>
 class myCat extends myAnimal {
-}
-  </script>
-  Nothing: <input type=text id="myText01" value="Your cats name"><br>
-
-  <input type=button value="Example Extend Class Animal" onClick="{
-
-myShow() {
+  myShow() {
     const textboxValue = document.getElementById('myText01').value.trim();
     const defaultValue = "Your cats name";
 
     if (textboxValue === defaultValue) { 
-        document.getElementById('myDiv01').innerHTML = 'My cat ' + this.myName + ' is a great cat (Default name used)';
+        document.getElementById('myDiv01').innerHTML = 'My cat ' + this.myName + ' is a great cat';
     } else {
-        document.getElementById('myDiv01').innerHTML = 'I'm sure that ' + textboxValue + ' is a great cat<br>(Your input was used)';
+        document.getElementById('myDiv01').innerHTML = 'I'm sure that ' + textboxValue + ' is a great cat<br>';
     }
 }
+}
+  </script>
+  Nothing: <input type=text id="myText01" value="Your cats name"><br>
+
+  <input type=button value="Example Extend Class Animal" onClick="{document.getElementById('myShow()').innerHTML
+
       
-
-
-
     myPet = new myCat('grunkus' , 11)
     myPet.myShow()
 
