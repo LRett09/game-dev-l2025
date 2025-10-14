@@ -25,14 +25,14 @@
 
   <h4> Example extending Class code</h4>
 
-  Nothing: <input type=text id="myText01" value="Maybe Something here later!"><br>
+  Nothing: <input type=text id="myText01" value="Your cats name"><br>
 
   <input type=button value="Example Extend Class Animal" onClick="{
 
     class myCat extends myAnimal {
 
     myShow(){
-    document.getElementById('myDiv01').innerHTML = this.myName + ' is a great cat<br>'
+    document.getElementById('myDiv01').innerHTML = document.getElementById('myText01') + ' is a great cat<br>'
     }
     }
 
