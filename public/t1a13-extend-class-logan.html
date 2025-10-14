@@ -32,9 +32,12 @@
     class myCat extends myAnimal {
 
     myShow(){
-    document.getElementById('myDiv01').innerHTML =  'Im sure that' + document.getElementById('myText01').value + ' is a great cat<br>'
+    if ('myText01' = 'Your cats name') then { document.getElementById('myDiv01').innerHTML = 'my cat ' + this.myName + ' is a great cat' }
+else {
+    document.getElementById('myDiv01').innerHTML =  'Im sure that ' + document.getElementById('myText01').value + ' is a great cat<br>'
     }
     }
+}
 
     myPet = new myCat('grunkus' , 11)
     myPet.myShow()
