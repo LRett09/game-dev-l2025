@@ -174,7 +174,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 
 ---
 
-<details open><summary>Wednesday Oct 1st, 2025</summary>
+<details><summary>Wednesday Oct 1st, 2025</summary>
 
 ### Title
 1.
@@ -258,8 +258,8 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details open><summary>Tuesday Oct 14th, 2025</summary>
 
 ### Title
-1.
-1.
+1. t1a13 extending classes
+1. Gemini is tweaking on everyones computer :D
 1.
 
 </details>
