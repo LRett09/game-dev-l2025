@@ -1,3 +1,11 @@
+<body onkeypress="myKeyPress(event)">
+
+   <script>
+      function myKeyPress(event) {
+         alert('you pressed: ${event.key}');
+      }
+   </script>
+
 <h1 align=center>t1a16-move-div</h1>
 
 <!-- Have 8 different types of obects move in different ways-->
@@ -12,6 +20,17 @@
 
 <button onclick="{
    const myDiv = document.getElementById('myDiv01')
-  myDiv.style.left += parseInt(myDiv.style.left) + 20 + 'px'
+  myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
 }">Move Right</button>
 <br><br>
+
+   <script>
+      function myCatch() {
+         document.getElementById('bet you cant catch me').style.left = 
+            parseInt(document.getElementById('bet you cant catch me').style.left) + '75px'
+         
+   
+   </script>
+<button id="bet you cant catch me" style="position:relative; left:0; top:0; width:40; height:20;"
+   onMouseOver=('myCatch')
+   
