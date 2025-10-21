@@ -1,1 +1,15 @@
 <h1 align=center>t1a16-move-div</h1>
+
+<!-- Have 8 different types of obects move in different ways-->
+
+<div style="position:relative; left:0; right:0" id="myDiv01">goober</div>
+
+<button onclick="{
+   const myDiv = document.getElementById('myDiv01')
+  myDiv.style.left = '100px'
+}">Move Right</button>
+<br><br>
+<button onclick="{
+   const myDiv = document.getElementById('myDiv01')
+  myDiv.style.left += parseInt(myDiv.style.left) + 20 + 'px'
+}">Move Right</button>
