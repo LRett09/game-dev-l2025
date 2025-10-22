@@ -1,6 +1,16 @@
 <body onkeypress="myKeyPress(event)">
 
    <script>
+      let myTimer01
+
+      function myAuto(){
+         const myIm = document.getElementById('myImage01')
+         myIm.style.left = parseInt(myIm.style.left) + 5 + 'px'
+         if (parseInt(myIm.style.left) > 600){
+            myIm.style.left = '10px'
+         }
+         {
+      
       function myKeyPress(event) {
          alert('you pressed: ${event.key}');
       }
@@ -14,25 +24,16 @@
 
 <button onclick="{
    const myDiv = document.getElementById('myDiv01')
-  myDiv.style.left = '100px'
-}">Move Right</button>
-<br><br>
+   myDiv.style.left = '100px'
+   }">Move to 100px</button><br>
 
-<button onclick="{
-   const myDiv = document.getElementById('myDiv01')
-  myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
-}">Move Right</button>
-<br><br>
+   <button id="myButton02" onclick="{
+      const myDiv = document.getElementById('myDiv01')
+      myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
+      }">Move Right</button><br>
 
-   <script>
-      function myCatch() "{
-         document.getElementById('bet you cant catch me').style.left = 
-            parseInt(document.getElementById('bet you cant catch me').style.left) + '75px'
-      }"
-         
-    </script>
+   <b onclick="{
+      myTimer01 = setInterval(myAuto, 50)
+      }">Move auto</b><br>
 
-   <button id="bet you cant catch me" style="position:relative; left:0; top:0; width:40; height:20;"
-   onMouseOver=('myCatch')>
-</button>
-   
+   <img src="myImage01.jpg" id="myImage01" width=40 style="position:relative; left:0; right:0">
