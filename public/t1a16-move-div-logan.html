@@ -24,16 +24,16 @@
       }">Move Right</button><br>
 
    <button id="startButton" onclick= "{
-      document.getElementById('Animate')
+      startButton.addEventListener('click', startAnimation)
    }">Start Animation </button>
 <img 
         id="myImage01" 
         src="Image01.jpg" 
-        style="position: absolute; top: 50 px; left: 0 px;"
+        style="position: absolute; top: '50px'; left: '0px';"
     >
 
        <script>
-        (function('Animate') {
+        (function() {
           
             const image = document.getElementById('myImage01');
             const startButton = document.getElementById('startButton');
