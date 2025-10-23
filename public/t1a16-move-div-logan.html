@@ -26,6 +26,9 @@
 <button id="startButton" onclick="startAnimation()"> Move across 
 </button>
 
+   <script>
+      const speed = 2; let positionX = 0; let animationFrameId = null; 
+   </script>
 
 <img 
         id="myImage01" 
@@ -34,11 +37,10 @@
     >
 
        <script>
-          function(startAnimation) {
+          function startAnimation() {
             const image = document.getElementById('myImage01');
             const startButton = document.getElementById('startButton');
-            const speed = 2; let positionX = 0; let animationFrameId = null; 
-
+            
             function animate() {
                 const screenWidth = document.documentElement.clientWidth; 
                 const imageWidth = image.offsetWidth;
