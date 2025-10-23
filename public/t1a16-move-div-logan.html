@@ -26,17 +26,15 @@
 <button id="startButton" onclick="startAnimation()"> Move across 
 </button>
 
-   <script>
-      const speed = 2; let positionX = 0; let animationFrameId = null; 
-   </script>
-
-<img 
+   <img 
         id="myImage01" 
         src="Image01.jpg" 
         style="position: absolute; top: '50px'; left: '0px';"
     >
 
        <script>
+           const speed = 2; let positionX = 0; let animationFrameId = null; 
+          
           function startAnimation() {
             const image = document.getElementById('myImage01');
             const startButton = document.getElementById('startButton');
