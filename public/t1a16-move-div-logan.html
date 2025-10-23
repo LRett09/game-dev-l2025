@@ -24,7 +24,7 @@
       }">Move Right</button><br>
 
 
-      <startButton.addEventListener('click', startAnimation)>
+      <startButton.addEventListener(id= 'Animate' onclick= 'startAnimation')>
 
 <img 
         id="myImage01" 
@@ -33,7 +33,7 @@
     >
 
        <script>
-          
+          function(startAnimation) {
             const image = document.getElementById('myImage01');
             const startButton = document.getElementById('startButton');
             const speed = 2; let positionX = 0; let animationFrameId = null; 
@@ -61,6 +61,6 @@
                         animationFrameId = null; 
                         startButton.disabled = false; 
                         startButton.textContent = 'Animation Complete';
-                    } } 
+                    } } }
             
     </script>
