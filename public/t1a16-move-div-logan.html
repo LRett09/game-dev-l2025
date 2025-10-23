@@ -1,15 +1,6 @@
 <body onkeypress="myKeyPress(event)">
 
    <script>
-      let myTimer01
-
-      function myAuto(){
-         const myIm = document.getElementById('myImage01')
-         myIm.style.left = parseInt(myIm.style.left) + 5 + 'px'
-         if (parseInt(myIm.style.left) > 600){
-            myIm.style.left = '10px'
-         }
-         {
       
       function myKeyPress(event) {
          alert('you pressed: ${event.key}');
@@ -36,4 +27,47 @@
       myTimer01 = setInterval(myAuto, 50)
       }>Move auto</button><br>
 
-   <img src="Image01.jpg" id="myImage01.jpg" width=320 style="position:relative; left:0; right:0">
+   <button id="startButton">
+            Start Animation
+        </button>
+<img 
+        id="myImage01" 
+        src="Image01.jpg" 
+        style="position: absolute; top: 100 px; left: 0 px;"
+    >
+
+       <script>
+        (function() {
+          
+            const image = document.getElementById('movingImage');
+            const startButton = document.getElementById('startButton');
+
+
+            const speed = 2; let positionX = 0; let animationFrameId = null; 
+
+            function animate() {
+                const screenWidth = document.documentElement.clientWidth; 
+                const imageWidth = image.offsetWidth;
+                const stopPosition = screenWidth - imageWidth;
+
+                if (positionX < stopPosition) {
+                    positionX += speed;
+                    
+                    if (positionX > stopPosition) {
+                        positionX = stopPosition;
+                    }
+                   
+                    image.style.left = positionX + 'px';
+
+                   
+                    animationFrameId = requestAnimationFrame(animate);
+                } else {
+                  
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null; 
+                        startButton.disabled = false; 
+                        startButton.textContent = 'Animation Complete';
+                    } } }
+            
+    </script>
