@@ -23,26 +23,20 @@
       myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
       }">Move Right</button><br>
 
-   <button onclick= {
-      myTimer01 = setInterval(myAuto, 50)
-      }>Move auto</button><br>
-
-   <button id="startButton">
-            Start Animation
-        </button>
+   <button id="startButton" onclick= "{
+      document.getElementById('Animate')
+   }">Start Animation </button>
 <img 
         id="myImage01" 
         src="Image01.jpg" 
-        style="position: absolute; top: 100 px; left: 0 px;"
+        style="position: absolute; top: 50 px; left: 0 px;"
     >
 
        <script>
-        (function() {
+        (function('Animate') {
           
-            const image = document.getElementById('movingImage');
+            const image = document.getElementById('myImage01');
             const startButton = document.getElementById('startButton');
-
-
             const speed = 2; let positionX = 0; let animationFrameId = null; 
 
             function animate() {
