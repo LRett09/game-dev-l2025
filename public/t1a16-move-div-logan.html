@@ -5,6 +5,11 @@
       function myKeyPress(event) {
          alert('you pressed: ${event.key}');
       }
+
+      function F1 () {
+         document.getElementById('myImage01').style.left = 
+            parseInt (document.getElementById('myImage01').style.left) + 10 + 'px'
+
    </script>
 
 <h1 align=center>t1a16-move-div</h1>
@@ -23,26 +28,11 @@
       myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
       }">Move Right</button><br>
 
-<style>
-    #movingImage {
-        position: relative;
-        transition: left 0.5 s; 
-    }
-</style>
-</head>
-<body>
-
-<img id="movingImage" src="Image01.jpg" alt="A moving object" width="50">
-<button onclick="moveImage()">Move</button>
-
-<script>
-    let currentPosition = 0; 
-
-    function moveImage() {
-        const image = document.getElementById('movingImage');
-        currentPosition += 50;
-        image.style.left = currentPosition + 'px'; 
-    }
-</script>
-
-</body>
+   
+<button id="myButton03" onclick="(F1 () )">Go Right Forever</button><br><br>   
+<input type="button" value="Go Right Forever" onclick="{
+   clearInterval (myClock01) ;
+   myClock01 = setInterval (function() (
+      document.getElementById('myButton03').click();
+} . 30)
+   )"><br><br>
