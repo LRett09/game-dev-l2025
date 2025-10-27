@@ -1,8 +1,10 @@
 <body onkeypress="myKeyPress(event)">
 
    <script>
-      
-      function myKeyPress(event) {
+
+      let myClock01 
+
+        function myKeyPress(event) {
          alert('you pressed: ${event.key}');
       }
 
@@ -18,6 +20,8 @@
 
 <div style="position:relative; left:0; right:0" id="myDiv01">goober</div>
 
+<img style="position:relative; left:100; right:100" id="myImage01" src="Image01.jpg"></img>
+   
 <button onclick="{
    const myDiv = document.getElementById('myDiv01')
    myDiv.style.left = '100px'
@@ -29,7 +33,7 @@
       }">Move Right</button><br>
 
    
-<button id="myButton03" onclick="(F1 () )">Go Right Forever</button><br><br>   
+<button id="myButton03" onclick="{F1 () }">Go Right Forever</button><br><br>   
 <input type="button" value="Go Right Forever" onclick="{
    clearInterval (myClock01) ;
    myClock01 = setInterval (function() (
