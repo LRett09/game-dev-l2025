@@ -13,6 +13,10 @@
             parseInt (document.getElementById('myDiv01').style.left) + 10 + 'px' 
       }
 
+      function F2() {
+         document.getElementById('myDiv01').style.right = 
+            parseInt (document.getElementById('myDiv01').style.right) + 10 + 'px'
+
    </script>
 
 <h1 align=center>t1a16-move-div</h1>
@@ -34,9 +38,17 @@
 
    
 <button id="myButton03" onclick="{F1()}">Go Right Forever</button><br>
-<input type="button" value="Go Right Forever" onclick="{
+<input type="button" value="Go Right Forever Again" onclick="{
    clearInterval (myClock01) ;
    myClock01 = setInterval (function() {
       document.getElementById('myButton03').click() ;
 } , 30)
-   }"><br><br>
+   }"><br>
+
+<button id="myButton04" onlick="{F2()}">Go Left Forever</button><br>
+   <input type="button" value="Go Left Forever Again" onclick="{
+      clearInterval (myClock01) ;
+      myClock01 = setInterval (function() {
+      document.getElementById('myButton04').click() ;
+      } , 30
+         }"><br>
