@@ -10,7 +10,8 @@
 
       function F1() {
          document.getElementById('myDiv01').style.left = 
-            parseInt (document.getElementById('myDiv01').style.left) + 10 + 'px'
+            parseInt (document.getElementById('myDiv01').style.left) + 10 + 'px' 
+      }
 
    </script>
 
@@ -32,10 +33,10 @@
       }">Move Right</button><br>
 
    
-<button id="myButton03" onclick="{F1()}">Go Right Forever</button><br><br>   
+<button id="myButton03" onclick="{F1()}">Go Right Forever</button><br>
 <input type="button" value="Go Right Forever" onclick="{
    clearInterval (myClock01) ;
    myClock01 = setInterval (function() {
-      document.getElementById('myButton03').click();
+      document.getElementById('myButton03').click() ;
 } , 30)
    }"><br><br>
