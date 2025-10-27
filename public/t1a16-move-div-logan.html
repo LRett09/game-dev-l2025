@@ -23,45 +23,26 @@
       myDiv.style.left = parseInt(myDiv.style.left) + 20 + 'px'
       }">Move Right</button><br>
 
-<button id="startButton" onclick="startAnimation()"> Move across 
-</button>
+<style>
+    #movingImage {
+        position: relative;
+        transition: left 0.5 s; 
+    }
+</style>
+</head>
+<body>
 
-   <img 
-        id="myImage01" 
-        src="Image01.jpg" 
-        style="position: absolute; top: '50px'; left: '0px';"
-    >
+<img id="movingImage" src="Image01.jpg" alt="A moving object" width="50">
+<button onclick="moveImage()">Move</button>
 
-       <script>
-           const speed = 2; let positionX = 0; let animationFrameId = null; 
-          
-          function startAnimation() {
-            const image = document.getElementById('myImage01');
-            const startButton = document.getElementById('startButton');
-            
-            function animate() {
-                const screenWidth = document.documentElement.clientWidth; 
-                const imageWidth = image.offsetWidth;
-                const stopPosition = screenWidth - imageWidth;
+<script>
+    let currentPosition = 0; 
 
-                if (positionX < stopPosition) {
-                    positionX += speed;
-                    
-                    if (positionX > stopPosition) {
-                        positionX = stopPosition;
-                    }
-                   
-                    image.style.left = positionX + 'px';
+    function moveImage() {
+        const image = document.getElementById('movingImage');
+        currentPosition += 50;
+        image.style.left = currentPosition + 'px'; 
+    }
+</script>
 
-                   
-                    animationFrameId = requestAnimationFrame(animate);
-                } else {
-                  
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null; 
-                        startButton.disabled = false; 
-                        startButton.textContent = 'Animation Complete';
-                    } } }
-            
-    </script>
+</body>
