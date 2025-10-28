@@ -2,7 +2,9 @@
 
    <script>
 
-      let myClock01 
+      let myClock01
+
+      let myClock02
 
         function myKeyPress(event) {
          alert('you pressed: ${event.key}');
@@ -48,8 +50,8 @@
 
 <button id="myButton04" onlick="{F2()}">Go Left</button><br>
    <input type="button" value="Go Left Forever Again" onclick="{
-      clearInterval (myClock01) ;
-      myClock01 = setInterval (function F2() {
+      clearInterval (myClock02) ;
+      myClock02 = setInterval (function () {
       document.getElementById('myButton04').click() ;
       } , 30)
          }"><br>
