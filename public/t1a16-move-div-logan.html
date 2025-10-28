@@ -18,6 +18,10 @@
       function F2() {
          document.getElementById('myDiv01').style.left = 
             parseInt (document.getElementById('myDiv01').style.left) + -10 + 'px'
+
+           function F3() {
+         document.getElementById('myDiv01').style.top = 
+            parseInt (document.getElementById('myDiv01').style.top) + -10 + 'px'
       }
 
    </script>
@@ -55,3 +59,14 @@
       document.getElementById('myButton04').click() ;
       } , 30)
          }"><br>
+
+<button id="myButton05" onclick="{F3()}">Go Up!</button><br>
+<input type="button" value="Go UP!" onclick="{
+   clearInterval (myClock01) ;
+   myClock01 = setInterval (function() {
+      document.getElementById('myButton05').click() ;
+} , 30)
+   }"><br>
+
+
+
