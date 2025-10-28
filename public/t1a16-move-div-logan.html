@@ -6,6 +6,8 @@
 
       let myClock02
 
+      let myClock03
+
         function myKeyPress(event) {
          alert('you pressed: ${event.key}');
       }
@@ -65,7 +67,7 @@
 <button id="myButton05" onclick="{F3()}">Go Up!</button><br>
 <input type="button" value="Go UP!" onclick="{
    clearInterval (myClock01) ;
-   myClock01 = setInterval (function() {
+   myClock03 = setInterval (function() {
       document.getElementById('myButton05').click() ;
 } , 30)
    }"><br>
