@@ -10,7 +10,7 @@
 
       function F1() {
          document.getElementById('myDiv01').style.left = 
-            parseInt (document.getElementById('myDiv01').style.left) + 10 + 'px' 
+            parseInt (document.getElementById('myDiv01').style.left) + 20 + 'px' 
       }
 
       function F2() {
@@ -38,7 +38,7 @@
       }">Move Right</button><br>
 
    
-<button id="myButton03" onclick="{F1()}">Go Right Forever</button><br>
+<button id="myButton03" onclick="{F1()}">Go Right More</button><br>
 <input type="button" value="Go Right Forever Again" onclick="{
    clearInterval (myClock01) ;
    myClock01 = setInterval (function() {
@@ -46,10 +46,10 @@
 } , 30)
    }"><br>
 
-<button id="myButton04" onlick="{F2()}">Go Left Forever</button><br>
+<button id="myButton04" onlick="{F2()}">Go Left</button><br>
    <input type="button" value="Go Left Forever Again" onclick="{
       clearInterval (myClock01) ;
-      myClock01 = setInterval (function() {
+      myClock01 = setInterval (function F2() {
       document.getElementById('myButton04').click() ;
       } , 30)
          }"><br>
