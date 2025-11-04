@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Minimal JavaScript Loops</title><style>body{font-family:monospace; margin: 10px;} h1{border-bottom: 1px solid #ccc; padding-bottom: 5px;} hr{margin: 10px 0;} pre{background:#eee; padding:5px; border-radius:3px; overflow-x:auto; font-size: 0.9em;} strong{color:#007bff;}</style></head><body>
+
+    <h1>Basic JavaScript Loops (Print-Optimized)</h1>
+
+    <hr>
+
+    <!-- 1. The Standard 'for' Loop -->
+    <h2>1. The `for` Loop (The Counter)</h2>
+    <pre>for (let i = 1; i <= 5; i++) { ... }</pre>
+    <div id="for-output"></div>
+
+    <!-- 2. The 'while' Loop -->
+    <h2>2. The `while` Loop (Check First)</h2>
+    <pre>let count = 1; while (count <= 5) { ... }</pre>
+    <div id="while-output"></div>
+
+    <!-- 3. The 'do...while' Loop -->
+    <h2>3. The `do...while` Loop (Run Once)</h2>
+    <p>Guarantees it runs once, even if the condition is false.</p>
+    <pre>let x = 10; do { ... } while (x <= 5);</pre>
+    <div id="do-while-output"></div>
+
+    <!-- 4. The 'for...in' Loop -->
+    <h2>4. The `for...in` Loop (Object Keys)</h2>
+    <pre>const pet = { name: "Max", species: "Dog" }; for (let key in pet) { ... }</pre>
+    <div id="for-in-output"></div>
+
+    <!-- 5. The 'for...of' Loop -->
+    <h2>5. The `for...of` Loop (Array Values)</h2>
+    <pre>const colors = ["Red", "Green", "Blue"]; for (let value of colors) { ... }</pre>
+    <div id="for-of-output"></div>
+
+    <hr>
+
+    <script>
+        // All logic is compressed and executed immediately for a compact printout.
+        (function(){
+            // Helper for simple output
+            const output = (id, text) => document.getElementById(id).innerHTML = `<strong>Output:</strong> ${text}`;
+
+            // 1. Standard 'for' loop
+            let forResult = ""; for (let i = 1; i <= 5; i++) { forResult += i + (i < 5 ? ", " : ""); } output('for-output', forResult);
+
+            // 2. 'while' loop
+            let whileResult = ""; let count = 1; while (count <= 5) { whileResult += count + (count < 5 ? ", " : ""); count++; } output('while-output', whileResult);
+
+            // 3. 'do...while' loop
+            let doWhileResult = "x starts at 10. "; let x = 10; do { doWhileResult += `Value: ${x}`; x++; } while (x <= 5); output('do-while-output', doWhileResult);
+
+            // 4. 'for...in' loop (for Objects)
+            const pet = { name: "Max", species: "Dog", age: 3 }; let forInResult = ""; let firstIn = true; for (let key in pet) { if (!firstIn) forInResult += " | "; forInResult += key + ": " + pet[key]; firstIn = false; } output('for-in-output', forInResult);
+
+            // 5. 'for...of' loop (for Arrays)
+            const colors = ["Red", "Green", "Blue", "Yellow"]; let forOfResult = colors.join(", "); output('for-of-output', forOfResult);
+        })();
+    </script>
+
+</body></html>
