@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>t1a17-prince - Crown Movement</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Viewport Height */
+            margin: 0;
+            background-color: white;
+            flex-direction: column;
+            /* Optional: Add a smooth transition for overall layout changes if needed */
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            /* align: top; is not a valid CSS property here, removed */
+        }
+
+        #moveButton {
+            padding: 10px 20px;
+            margin-bottom: 30px; /* Add some space below the button */
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #myDiv01 {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            background-color: black;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            /* align: center; is not a valid CSS property here, removed */
+
+            /* --- Add Transition for Smooth Movement --- */
+            /* This tells the browser to animate changes to the transform property */
+            transition: transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
+            /* Initial position (start at the center) */
+            transform: translate(0px, 0px);
+        }
+
+        /* The 'moved' and 'step-1' classes you had were redundant or incomplete, 
+           we'll rely on the step classes alone, and manage them sequentially in JS */
+
+        #myDiv01.step-1 {
+            /* Left base */
+            transform: translate(-200px, 0px);
+        }
+
+        #myDiv01.step-2 {
+            /* First peak */
+            transform: translate(-100px, -150px); /* Adjusted Y for a better crown shape */
+        }
+
+        #myDiv01.step-3 {
+            /* Center dip */
+            transform: translate(0px, -50px); /* Adjusted Y for a better crown shape */
+        }
+
+        #myDiv01.step-4 {
+            /* Second peak */
+            transform: translate(100px, -150px); /* Adjusted Y for a better crown shape */
+        }
+
+        #myDiv01.step-5 {
+            /* Right base */
+            transform: translate(200px, 0px);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 align="center-top">t1a17-prince - Crown Movement</h1>
+
+    <button id="moveButton">Press the SPACEBAR to Move</button>
+
+    <div id="myDiv01"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const moveButton = document.getElementById('moveButton');
+            const myDiv = document.getElementById('myDiv01');
+
+            const steps = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            let currentStepIndex = -1; // -1 represents the 'reset' (initial) state
+
+            function updateMovement() {
+                // Clear any existing step classes
+                steps.forEach(step => myDiv.classList.remove(step));
+
+                // Move to the next step
+                currentStepIndex++;
+
+                if (currentStepIndex < steps.length) {
+                    // Apply the next step class for movement
+                    myDiv.classList.add(steps[currentStepIndex]);
+                    moveButton.textContent = `**Press SPACEBAR for Step ${currentStepIndex + 2} / 6**`;
+                } else {
+                    
+                    currentStepIndex = -1;
+                    
+                    moveButton.textContent = '**Press the SPACEBAR to Start**';
+                }
+            }
+
+            
+            moveButton.textContent = '**Press the SPACEBAR to Start**';
+
+            document.addEventListener('keydown', (event) => {
+                // Checks for when spacebar is pressed
+                if (event.code === 'Space' || event.key === ' ') {
+                    // IMPORTANT: This stops the spacebar from scrolling the page
+                    event.preventDefault();
+
+                    // Trigger the movement update
+                    updateMovement();
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
