@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Deep Mine (Aggressive Throttling)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        // --- FIREBASE IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables (MANDATORY)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let userId = 'loading';
+        let lastTime = 0; // Tracks timestamp for requestAnimationFrame deltaTime calculation
+
+        setLogLevel('debug');
+
+        // --- GAME CONSTANTS ---
+        // Setting the update interval to 1.0 second to reduce performance load
+        const UI_UPDATE_INTERVAL = 1.0; // Throttle UI/Save to 1 time per second (1.0 seconds)
+
+        // Permanent Research Points (PRP) Upgrades
+        const PRP_UPGRADES = {
+            'PRP_DS': { id: 'PRP_DS', name: 'Drill Efficiency', cost: 1, effect: '+0.5 Base Drill Speed', stat: 'baseDrillSpeed', value: 0.5, maxTier: 10 },
+			'PRP_CC': { id: 'PRP_CC', name: 'Critical Upgrades', cost: 1, effect: '+1% Critical chance', stat: 'baseCritChance', value: 0.01, maxTier: 10 },
+            'PRP_MP': { id: 'PRP_MP', name: 'Reactor Capacity', cost: 2, effect: '+25 Max Power', stat: 'maxPower', value: 10, maxTier: 5 },
+            'PRP_MO': { id: 'PRP_MO', name: 'Life Support Capacity', cost: 2, effect: '+25 Max Oxygen', stat: 'maxOxygen', value: 10, maxTier: 5 },
+            'PRP_OV': { id: 'PRP_OV', name: 'Ore Magnets', cost: 5, effect: '+2 Base Ore Value', stat: 'baseOreValue', value: 2, maxTier: 10 },
+		
+        };
+
+        const SKILLS = {
+            'A1': { name: 'Basic Metallurgy', cost: 10, effect: '+10% Ore Value', prereq: null, bonus: { oreValueMultiplier: 0.1 } },
+            'A2': { name: 'Reinforced Drills', cost: 10, effect: '+2 Drill Speed', prereq: null, bonus: { drillSpeed: 2 } },
+            'A3': { name: 'Oxygen Recycling', cost: 10, effect: '+1 Oxygen/sec', prereq: null, bonus: { oxygenRate: 1 } },
+            'B1': { name: 'Advanced Scanning', cost: 30, effect: 'Reveals next resource type', prereq: 'A1', bonus: { scanner: true } },
+            'B2': { name: 'High-Frequency Motor', cost: 30, effect: '+5 Speed, -0.5 Power/sec', prereq: 'A2', bonus: { drillSpeed: 5, powerRate: -0.5 } },
+            'B3': { name: 'Emergency Protocols', cost: 30, effect: 'Reduces failures', prereq: 'A3', bonus: { failureReduction: 0.5 } },
+            'C1': { name: 'Synthetic Gems', cost: 100, effect: 'All resources are 2x value', prereq: 'B1', bonus: { oreValueMultiplier: 1.0 } },
+            'C2': { name: 'Focused Plasma Bit', cost: 100, effect: '20% Critical Drill Chance (3x)', prereq: 'B2', bonus: { critChance: 0.2, critMultiplier: 3 } },
+            'C3': { name: 'Automated Maintenance', cost: 100, effect: 'Power consumption halved', prereq: 'B3', bonus: { powerConsumptionFactor: 0.5 } },
+            'D1': { name: 'Deep Thermal Lensing', cost: 600, effect: '+1% Ore Value per 100m Depth', prereq: 'C1', bonus: { depthValueBonus: 0.0001 } }, 
+            'D2': { name: 'Kinetic Reclaimer', cost: 600, effect: '+1 Power/sec while Drilling', prereq: 'C2', bonus: { powerGainOnDrill: 1 } },
+            'D3': { name: 'Thermal Dampeners', cost: 600, effect: 'Halves Heat gain & increases cooling rate', prereq: 'C3', bonus: { heatFactor: 0.5, coolingFactor: 1.5 } },
+            'E1': { name: 'Quantum Harmonizer', cost: 2500, effect: '5% chance for 2x Ore gain', prereq: 'D1', bonus: { megaCritChance: 0.05, megaCritMultiplier: 2 } },
+            'E2': { name: 'Temporal Accelerator', cost: 2500, effect: '+15 Base Drill Speed', prereq: 'D2', bonus: { drillSpeed: 15 } },
+            'E3': { name: 'Infinite Reactor', cost: 2500, effect: '+3 Power/sec (Net positive)', prereq: 'D3', bonus: { powerRate: 3 } },
+			'F1': { name: 'Cave Adapted', cost: 10000, effect: 'you should see the surface a bit more', prereq: 'E1', specialEffect: { depthSet: 1000 } },
+			'F2': { name: 'Cloning', cost: 10000, effect: 'All hands on deck!', prereq: 'E2', bonus: {megaCritChance: 0.10, megaCritMultiplier: 2.5 } },
+			'F3': { name: 'Loganite Refinery', cost: 10000, effect: 'Loganite value: +1', prereq: 'E3', bonus: { loganiteValue: 2 } },
+			'G1': { name: 'Portal to the uknown', cost: 25000, effect: 'You find a portal', prereq: 'F1', specialEffect: { depthSet: 10000 } },
+			'G2': { name: 'Magical enchancements', cost: 25000, effect: 'Its good your learning', prereq: 'F2', bonus: { oreValueMultiplier: 2.0 } },
+			'G3': { name: 'Protective barrier', cost: 25000, effect: 'With magic we cannot fail', prereq: 'F3', bonus: { failureReduction: 0.8 } },
+        };
+
+        const RESOURCES = [
+            { depth: 0, name: 'Copper', value: 1 },
+            { depth: 100, name: 'Iron', value: 2 },
+            { depth: 250, name: 'Silver', value: 4 },
+            { depth: 500, name: 'Gold', value: 8 },
+            { depth: 1000, name: 'Tritanium', value: 20 },
+            { depth: 2000, name: 'Aetherium Core', value: 50 },
+			{ depth: 4000, name: 'Loganite', value: 1 },
+			{ depth: 6900, name: 'Ultimum', value: 60 },
+			{ depth: 10000, name: 'Fred', value: 33 },
+        ];
+
+        // --- GAME STATE (Default) ---
+
+        let gameState = {
+            ore: 0,
+            depth: 0,
+            drilling: false,
+            isPaused: false, 
+            gameOver: false,
+            message: 'Initializing...',
+            currentLevelResource: 'Copper',
+            
+            // Resources & Capacity
+            power: 100, maxPower: 100,
+            oxygen: 100, maxOxygen: 100,
+            temperature: 0,
+
+            // Base stats (modified by Permanent Research Points)
+            baseDrillSpeed: 1,
+            baseDrillingPowerConsumption: 2,
+            baseIdlingPowerConsumption: 1, 
+            baseOxygenConsumption: 2,
+            baseOreValue: 1,
+			baseCritChance: 0,
+			
+            
+            // Skill modifiers container
+            mods: {},
+            unlockedSkills: [],
+
+            // Permanent Progression
+            permanentResearchPoints: 0,
+            maxDepth: 0,
+            prpTiers: {}, // Stores purchased tiers for PRP_UPGRADES
+
+            // UI Throttling
+            timeSinceLastUIUpdate: 0, // Time accumulator for UI/Save
+        };
+
+        // --- FIREBASE AND PERSISTENCE ---
+
+        async function setupFirebase() {
+            if (!firebaseConfig) { console.error("Firebase config is missing."); initializeGame(); return; }
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                if (initialAuthToken) { await signInWithCustomToken(auth, initialAuthToken); } else { await signInAnonymously(auth); }
+                userId = auth.currentUser ? auth.currentUser.uid : crypto.randomUUID();
+                document.getElementById('user-id-display').innerText = `User ID: ${userId}`;
+                
+                onSnapshot(getDocRef(), (docSnap) => {
+                    if (docSnap.exists()) {
+                        loadGame(docSnap.data());
+                    } else {
+                        // If no save found, initialize a new game, but preserve PRP/MaxDepth if they were loaded previously
+                        const initialPrp = gameState.permanentResearchPoints;
+                        const initialMaxDepth = gameState.maxDepth;
+                        const initialPrpTiers = gameState.prpTiers;
+                        
+                        initializeGame(); 
+                        
+                        gameState.permanentResearchPoints = initialPrp;
+                        gameState.maxDepth = initialMaxDepth; 
+                        gameState.prpTiers = initialPrpTiers;
+                        
+                        applyPermanentBonuses(); // Apply restored PRPs
+                        saveGame(gameState);
+                    }
+                }, (error) => { console.error("Firestore listener error:", error); });
+            } catch (error) {
+                console.error("Firebase setup failed:", error);
+                gameState.message = `ERROR: Failed to connect to persistence. Check console.`;
+                updateUI();
+                initializeGame();
+            }
+        }
+
+        function getDocRef() {
+            if (!db) return null;
+            const userDocPath = `artifacts/${appId}/users/${userId}/deep_mine_state`;
+            return doc(db, userDocPath, 'game_state');
+        }
+
+        async function saveGame(state) {
+            const docRef = getDocRef();
+            if (docRef) {
+                try {
+                    const stateToSave = { ...state };
+                    // Exclude transient/runtime state from saving
+                    delete stateToSave.message; 
+                    delete stateToSave.timeSinceLastUIUpdate;
+                    
+                    await setDoc(docRef, stateToSave);
+                } catch (error) {
+                    console.error("Error saving game state:", error);
+                }
+            }
+        }
+
+        function loadGame(data) {
+            // Restore only explicitly saved fields and ensure defaults for new fields
+            const defaults = { 
+                permanentResearchPoints: 0, 
+                maxDepth: 0, 
+                isPaused: false, 
+                baseIdlingPowerConsumption: 1,
+                prpTiers: {} 
+            };
+            
+            // Merge defaults, then stored data
+            gameState = { ...gameState, ...defaults, ...data };
+            
+            // Ensure prpTiers is correctly initialized with all upgrade IDs
+            for(const id in PRP_UPGRADES) {
+                gameState.prpTiers[id] = gameState.prpTiers[id] || 0;
+            }
+            
+            applyPermanentBonuses();
+            recalculateMods();
+            updateUI();
+            
+            // Start the game loop using rAF if not paused/over
+            if (!gameState.gameOver && !gameState.isPaused) {
+                startGameLoop();
+            } else if (gameState.gameOver || gameState.isPaused) {
+                 document.getElementById('message-box').classList.remove('hidden');
+            }
+        }
+
+        // --- INITIALIZATION AND MODIFIER CALCULATION ---
+
+        /** Initializes or resets the game state for a new run. */
+        function initializeGame() {
+            // Preserve permanent stats for the new run
+            const previousPrp = gameState.permanentResearchPoints || 0;
+            const globalMaxDepth = gameState.maxDepth || 0; 
+            const savedPrpTiers = gameState.prpTiers || {}; 
+			baseCritChance: 0,
+
+            // Reset to a clean state, preserving permanent stats
+            gameState = {
+                ...gameState,
+                ore: 0, depth: 0, drilling: false, isPaused: false, 
+                power: 100, maxPower: 100, oxygen: 100, maxOxygen: 100, temperature: 0,
+                baseDrillSpeed: 1, baseDrillingPowerConsumption: 2, baseIdlingPowerConsumption: 1,
+                baseOxygenConsumption: 2, baseOreValue: 1,
+                mods: {}, unlockedSkills: [], gameOver: false,
+                message: 'Ready to drill!', currentLevelResource: 'Copper',
+                timeSinceLastUIUpdate: 0, // Reset timer
+                
+                // Restore permanent progression
+                permanentResearchPoints: previousPrp, 
+                maxDepth: globalMaxDepth,
+                prpTiers: savedPrpTiers,
+            };
+            
+            // Re-initialize prpTiers in case new upgrades are added
+            for(const id in PRP_UPGRADES) {
+                gameState.prpTiers[id] = gameState.prpTiers[id] || 0;
+            }
+            
+            applyPermanentBonuses();
+            recalculateMods();
+            saveGame(gameState);
+            updateUI();
+        }
+
+        /** Applies permanent bonuses from Permanent Research Points (PRP) purchases. */
+        function applyPermanentBonuses() {
+            const { prpTiers } = gameState;
+            const currentPower = gameState.power; 
+            const currentOxygen = gameState.oxygen;
+
+            // 1. Reset base stats to their absolute minimum (before PRP)
+            gameState.baseDrillSpeed = 1;
+            gameState.maxPower = 100;
+            gameState.maxOxygen = 100;
+            gameState.baseOreValue = 1;
+            
+            // 2. Apply PRP-purchased tiers
+            for (const id in PRP_UPGRADES) {
+                const upgrade = PRP_UPGRADES[id];
+                const tier = prpTiers[id] || 0;
+                if (tier > 0) {
+                    gameState[upgrade.stat] += tier * upgrade.value;
+                }
+            }
+            
+            // 3. CAP current resources at the new max capacity (DO NOT refill)
+            gameState.power = Math.min(currentPower, gameState.maxPower); 
+            gameState.oxygen = Math.min(currentOxygen, gameState.maxOxygen);
+        }
+
+        /** Recalculates all skill modifiers into the gameState.mods object. */
+        function recalculateMods() {
+            // Reset mods to default/zero values
+            gameState.mods = {
+                oreValueMultiplier: 0, drillSpeed: 0, powerRate: 0, oxygenRate: 0,
+                scanner: false, failureReduction: 0, critChance: 0,
+                depthValueBonus: 0, powerGainOnDrill: 0, megaCritChance: 0,
+                // Multipliers/Factors must start at 1
+                powerConsumptionFactor: 1, critMultiplier: 1, heatFactor: 1, 
+                coolingFactor: 1, megaCritMultiplier: 1,
+            };
+			
+			gameState.mods.critChance += gameState.baseCritChance;
+
+            for (const skillId of gameState.unlockedSkills) {
+                const skill = SKILLS[skillId];
+                if (!skill || !skill.bonus) continue;
+
+                for (const key in skill.bonus) {
+                    const bonusValue = skill.bonus[key];
+                    if (key === 'powerConsumptionFactor' || key === 'heatFactor') {
+                        // Apply the smallest (most beneficial) factor
+                        gameState.mods[key] = Math.min(gameState.mods[key], bonusValue);
+                    } else if (key === 'coolingFactor') {
+                        // Apply the largest (most beneficial) factor
+                        gameState.mods[key] = Math.max(gameState.mods[key], bonusValue);
+                    } else if (typeof bonusValue === 'number') {
+                        gameState.mods[key] += bonusValue;
+                    } else if (typeof bonusValue === 'boolean') {
+                        gameState.mods[key] = bonusValue;
+                    }
+                }
+            }
+        }
+
+        // --- CALCULATION HELPERS (Pure Getters) ---
+
+        /** Returns the current resource based on depth. */
+        function getCurrentResource(depth) {
+            return RESOURCES.reduce((prev, curr) => depth >= curr.depth ? curr : prev, RESOURCES[0]);
+        }
+
+        /** Returns the multiplier effect of current temperature on power consumption. */
+        function getTemperatureFactor() {
+            return 1 + (gameState.temperature / 100); 
+        }
+        
+        /** Returns the net power consumption/gain rate per second. */
+        function getEffectivePowerConsumptionRate() {
+            const { drilling, baseDrillingPowerConsumption, baseIdlingPowerConsumption, mods } = gameState;
+            const tempFactor = getTemperatureFactor();
+            
+            const baseConsumption = drilling ? baseDrillingPowerConsumption : baseIdlingPowerConsumption;
+
+            // Consumption calculation: (base consumption) * (skill factor) * (temp factor)
+            const powerDrain = baseConsumption * mods.powerConsumptionFactor * tempFactor 
+            
+            let netDelta = -powerDrain + mods.powerRate;
+            if (drilling) {
+                netDelta += mods.powerGainOnDrill;
+            }
+
+            return netDelta;
+        }
+
+        /** Returns the net oxygen consumption/gain rate per second. */
+        function getEffectiveOxygenRate() {
+            return -gameState.baseOxygenConsumption + gameState.mods.oxygenRate;
+        }
+
+        // --- MAIN GAME LOOP ---
+
+        /** Starts the continuous game loop using requestAnimationFrame (rAF). */
+        function startGameLoop() {
+            if (!gameState.gameOver && !gameState.isPaused) {
+                lastTime = 0; // Reset last time to prevent huge initial delta on resume
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        /** The main game loop logic. */
+        function gameLoop(currentTime) {
+            // Stop loop if game is over or paused
+            if (gameState.gameOver || gameState.isPaused) {
+                lastTime = 0; 
+                return; 
+            }
+
+            // Initialization for the first frame
+            if (lastTime === 0) {
+                lastTime = currentTime;
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Calculate time elapsed since last frame in seconds
+            const deltaTime = (currentTime - lastTime) / 1000; 
+            lastTime = currentTime;
+
+            // Clamp delta time to prevent excessive changes after long tab inactivity
+            const clampedDeltaTime = Math.min(deltaTime, 0.5); 
+            
+            // Accumulate time for the throttled updates
+            gameState.timeSinceLastUIUpdate += clampedDeltaTime; 
+
+            // 1. Temperature Update
+            handleTemperatureUpdate(clampedDeltaTime);
+
+            // 2. Resource Consumption/Generation
+            handleResourceConsumption(clampedDeltaTime);
+            
+            // 3. Drilling & Ore Gain
+            if (gameState.drilling && gameState.power > 0) {
+                handleDrilling(clampedDeltaTime);
+            } else if (gameState.drilling && gameState.power <= 0) {
+                gameState.drilling = false;
+                gameState.message = 'Power exhausted! Drill stopped.';
+            }
+
+            // 4. Failure Checks
+            handleFailureChecks(clampedDeltaTime);
+
+            // 5. Game Over Checks (Check immediately)
+            if (gameState.oxygen <= 0) {
+                handleGameOver('Oxygen depletion');
+                return; // Stop the loop immediately
+            }
+
+            // 6. THROWTTLED UI Update and Persistence (Only 1 time per second)
+            if (gameState.timeSinceLastUIUpdate >= UI_UPDATE_INTERVAL) {
+                updateUI();
+                saveGame(gameState);
+                gameState.timeSinceLastUIUpdate = 0; // Reset timer
+            }
+            
+            // Continue the loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleTemperatureUpdate(deltaTime) {
+            const { drilling, power, temperature, mods } = gameState;
+            
+            if (drilling && power > 0) {
+                gameState.temperature += (3 * mods.heatFactor) * deltaTime;
+            } else {
+                gameState.temperature -= (5 * mods.coolingFactor) * deltaTime;
+            }
+            gameState.temperature = Math.min(100, Math.max(0, gameState.temperature));
+        }
+
+        function handleResourceConsumption(deltaTime) {
+            const powerDelta = getEffectivePowerConsumptionRate(); 
+            const oxygenDelta = getEffectiveOxygenRate(); 
+
+            // Apply decay/gain rate multiplied by deltaTime
+            gameState.power = Math.min(gameState.maxPower, Math.max(0, gameState.power + powerDelta * deltaTime));
+            gameState.oxygen = Math.min(gameState.maxOxygen, Math.max(0, gameState.oxygen + oxygenDelta * deltaTime));
+        }
+
+        function handleDrilling(deltaTime) {
+            const { baseDrillSpeed, mods, baseOreValue } = gameState;
+            let currentDrillSpeed = baseDrillSpeed + mods.drillSpeed;
+            let isCrit = false;
+
+            // C2: Crit chance (speed multiplier) - scaled by deltaTime
+            if (mods.critChance > 0 && Math.random() < mods.critChance * deltaTime) { 
+                isCrit = true;
+                currentDrillSpeed *= mods.critMultiplier;
+                gameState.message = 'CRITICAL DRILL! Equipment humming...';
+            }
+
+            // Depth gained is rate per second * deltaTime
+            const depthGained = currentDrillSpeed * deltaTime;
+            
+            const previousDepth = gameState.depth;
+            gameState.depth += depthGained;
+            gameState.maxDepth = Math.max(gameState.maxDepth, gameState.depth); 
+
+            // Ore generation
+            const currentResource = getCurrentResource(previousDepth);
+            
+            // D1: Depth Value Bonus calculation 
+            const depthBonus = gameState.depth * mods.depthValueBonus; 
+            
+            let oreMultiplier = baseOreValue * (1 + mods.oreValueMultiplier + depthBonus); 
+            
+            // E1: Mega Crit Chance (ore multiplier) - scaled by deltaTime
+            if (mods.megaCritChance > 0 && Math.random() < mods.megaCritChance * deltaTime) {
+                 oreMultiplier *= mods.megaCritMultiplier;
+                 gameState.message = 'QUANTUM HARMONY! Massive ore yield!';
+            }
+
+            const oreGained = depthGained * currentResource.value * oreMultiplier;
+            gameState.ore += oreGained;
+
+            // Update UI feedback (Less frequent message update)
+            if (!isCrit && gameState.timeSinceLastUIUpdate === 0) { // Check if UI is about to update
+                 gameState.message = 'Drilling deeper...';
+            }
+            gameState.currentLevelResource = getCurrentResource(gameState.depth).name;
+        }
+
+        function handleFailureChecks(deltaTime) {
+            const { failureReduction } = gameState.mods;
+            // Base failure chance is 0.5% per second (0.005)
+            if (Math.random() < (0.005 * (1 - failureReduction) * deltaTime)) { 
+                 const failureType = Math.random() > 0.5 ? 'Power' : 'Oxygen';
+                 const penalty = Math.ceil(Math.random() * 20) + 10;
+                 
+                 if (failureType === 'Power') {
+                    gameState.power = Math.max(0, gameState.power - penalty);
+                    gameState.message = `MINOR FAILURE: Power surge! Lost ${penalty} Power.`;
+                 } else {
+                    gameState.oxygen = Math.max(0, gameState.oxygen - penalty);
+                    gameState.message = `MINOR FAILURE: Oxygen leak! Lost ${penalty} Oxygen.`;
+                 }
+                 
+                 // Stop drilling after failure
+                 if (gameState.drilling) gameState.drilling = false; 
+            }
+        }
+
+        function handleGameOver(reason) {
+            gameState.gameOver = true;
+            gameState.message = `GAME OVER: ${reason}. You reached a depth of ${gameState.depth.toFixed(1)}m.`;
+            // Call updateUI once immediately to finalize the state visually
+            updateUI(); 
+            saveGame(gameState);
+        }
+
+        // --- WINDOW INTERACTION FUNCTIONS (Must call updateUI/saveGame immediately) ---
+        
+        window.buyPrpUpgrade = function(upgradeId) {
+            if (gameState.gameOver || gameState.isPaused) return;
+            const upgrade = PRP_UPGRADES[upgradeId];
+            const currentTier = gameState.prpTiers[upgradeId] || 0;
+
+            if (currentTier >= upgrade.maxTier) {
+                gameState.message = `${upgrade.name} is already at max tier (${upgrade.maxTier}).`;
+            } else if (gameState.permanentResearchPoints < upgrade.cost) {
+                gameState.message = `Insufficient PRP! Need ${upgrade.cost} PRP to purchase ${upgrade.name} Tier ${currentTier + 1}.`;
+            } else {
+                gameState.permanentResearchPoints -= upgrade.cost;
+                gameState.prpTiers[upgradeId]++;
+                
+                applyPermanentBonuses();
+                recalculateMods();
+                
+                gameState.message = `${upgrade.name} upgraded to Tier ${gameState.prpTiers[upgradeId]}! All base stats updated.`;
+            }
+            updateUI();
+            saveGame(gameState);
+        }
+
+        window.toggleDrill = function() {
+            if (gameState.gameOver || gameState.isPaused) return;
+            gameState.drilling = !gameState.drilling;
+            gameState.message = gameState.drilling ? 'Drill engaged.' : 'Drill paused for maintenance/cooling.';
+            updateUI();
+            saveGame(gameState);
+        }
+        
+        window.togglePause = function() {
+            if (gameState.gameOver) return;
+
+            gameState.isPaused = !gameState.isPaused;
+            
+            if (gameState.isPaused) {
+                gameState.message = 'Game Paused. Progress is safe.';
+            } else {
+                startGameLoop();
+                gameState.message = 'Game Resumed. Activity re-initiated.';
+            }
+
+            updateUI();
+            saveGame(gameState);
+        }
+
+        window.buySkill = function(skillId) {
+            if (gameState.gameOver || gameState.isPaused) return;
+            const skill = SKILLS[skillId];
+
+            if (gameState.unlockedSkills.includes(skillId) || (skill.prereq && !gameState.unlockedSkills.includes(skill.prereq)) || gameState.ore < skill.cost) {
+                if (gameState.unlockedSkills.includes(skillId)) gameState.message = `${skill.name} is already unlocked.`;
+                else if (skill.prereq && !gameState.unlockedSkills.includes(skill.prereq)) gameState.message = `Cannot unlock ${skill.name}. Requires ${SKILLS[skill.prereq].name}.`;
+                else gameState.message = `Insufficient Ore! Need ${skill.cost} Ore for ${skill.name}.`;
+                return updateUI();
+            }
+
+			if (skill.specialEffect && typeof skill.specialEffect.depthSet === 'number') {
+                const newDepth = skill.specialEffect.depthSet;
+                gameState.depth = newDepth;
+                gameState.maxDepth = Math.max(gameState.maxDepth, newDepth);
+                gameState.message = `Skill unlocked: ${skill.name}! Depth has been set to ${newDepth.toFixed(1)}m.`;
+            } else {
+                gameState.message = `Skill unlocked: ${skill.name}!`;
+            }
+
+            gameState.ore -= skill.cost;
+            gameState.unlockedSkills.push(skillId);
+            recalculateMods();
+            gameState.message = `Skill unlocked: ${skill.name}!`;
+            updateUI();
+            saveGame(gameState);
+        }
+        
+        window.refillPower = function() {
+             if (gameState.gameOver || gameState.isPaused) return;
+             const cost = 5;
+             if (gameState.ore >= cost) {
+                 gameState.ore -= cost;
+                 gameState.power = gameState.maxPower;
+                 gameState.message = 'Power Refilled! Back to 100.';
+             } else {
+                 gameState.message = `Need ${cost} Ore to refill Power.`;
+             }
+             updateUI();
+             saveGame(gameState);
+        }
+
+        window.refillOxygen = function() {
+             if (gameState.gameOver || gameState.isPaused) return;
+             const cost = 10;
+             if (gameState.ore >= cost) {
+                 gameState.ore -= cost;
+                 gameState.oxygen = gameState.maxOxygen;
+                 gameState.message = 'Oxygen Replenished! Back to 100.';
+             } else {
+                 gameState.message = `Need ${cost} Ore to refill Oxygen.`;
+             }
+             updateUI();
+             saveGame(gameState);
+        }
+
+        window.restartGame = function() {
+            document.getElementById('message-box').classList.add('hidden');
+            document.getElementById('message-box').classList.remove('bg-red-700', 'bg-blue-600');
+            initializeGame();
+            startGameLoop();
+        }
+        
+        window.ascendGame = function() {
+            if (gameState.gameOver || gameState.isPaused) return;
+
+            if (gameState.depth < 500) {
+                 gameState.message = 'You must reach at least 500m to ascend and gain permanent benefits.';
+                 updateUI();
+                 return;
+            }
+            
+            const prpGained = Math.floor(gameState.depth / 500);
+            
+            if (prpGained === 0) {
+                 gameState.h = 'You need to drill deeper than 500m to gain permanent research points!';
+                 updateUI();
+                 return;
+            }
+
+            gameState.permanentResearchPoints += prpGained;
+            
+            document.getElementById('message-box').classList.remove('bg-red-700', 'bg-blue-600');
+            gameState.message = `ASCENSION COMPLETE! Gained ${prpGained} Permanent Research Points. Starting a new, better run!`;
+            
+            initializeGame();
+            startGameLoop();
+        }
+
+        // --- UI RENDERING ---
+        
+        /** Updates the entire UI based on the current gameState. */
+        function updateUI() {
+            // Stats
+            document.getElementById('ore-count').innerText = `${gameState.ore.toFixed(1)} Ore`;
+            document.getElementById('depth-count').innerText = `${gameState.depth.toFixed(1)}m`;
+            document.getElementById('resource-type').innerText = gameState.currentLevelResource;
+            document.getElementById('max-depth-display').innerText = `Record Depth: ${gameState.maxDepth.toFixed(1)}m`; 
+            document.getElementById('permanent-stats-display').innerText = 
+                `Permanent Research Points (PRP): ${gameState.permanentResearchPoints}`;
+
+            const effectiveConsumptionRate = getEffectivePowerConsumptionRate();
+            const effectiveOxygenRate = getEffectiveOxygenRate();
+
+            // Power Bar
+            const powerPercent = Math.max(0, Math.min(100, gameState.power / gameState.maxPower) * 100); 
+            document.getElementById('power-bar').style.width = `${powerPercent}%`;
+            document.getElementById('power-bar-text').innerText = `Power: ${gameState.power.toFixed(1)}/${gameState.maxPower.toFixed(1)} (${effectiveConsumptionRate.toFixed(1)}/s)`;
+            
+            // Oxygen Bar
+            const oxygenPercent = Math.max(0, Math.min(100, gameState.oxygen / gameState.maxOxygen) * 100); 
+            document.getElementById('oxygen-bar').style.width = `${oxygenPercent}%`;
+            document.getElementById('oxygen-bar-text').innerText = `Oxygen: ${gameState.oxygen.toFixed(1)}/${gameState.maxOxygen.toFixed(1)} (${effectiveOxygenRate.toFixed(1)}/s)`;
+            
+            // Temperature Bar
+            const tempPercent = gameState.temperature;
+            const tempDisplay = document.getElementById('temp-bar');
+            tempDisplay.style.width = `${tempPercent}%`;
+            tempDisplay.classList.remove('bg-yellow-500', 'bg-red-700');
+            if (tempPercent < 50) { tempDisplay.classList.add('bg-yellow-500'); } else { tempDisplay.classList.add('bg-red-700'); }
+            document.getElementById('temp-bar-text').innerText = `Heat: ${gameState.temperature.toFixed(0)}% (x${getTemperatureFactor().toFixed(1)} Power Multiplier)`;
+			if (tempPercent == 100) { gameState.gameOver = true; gameState.message = "Critical Overheat! Game Over!" } ;  
+
+
+            // Main Controls
+            const drillButton = document.getElementById('drill-button');
+            drillButton.innerText = gameState.drilling ? 'Stop Drill (IDLING)' : 'Start Drill';
+            drillButton.classList.toggle('bg-red-600', gameState.drilling);
+            drillButton.classList.toggle('bg-green-600', !gameState.drilling);
+            
+            // Pause Button Logic
+            const pauseButton = document.getElementById('pause-button');
+            pauseButton.innerText = gameState.isPaused ? 'Resume Game' : 'Pause Game';
+            pauseButton.classList.toggle('bg-blue-600', gameState.isPaused);
+            pauseButton.classList.toggle('bg-yellow-600', !gameState.isPaused);
+            pauseButton.disabled = gameState.gameOver;
+            pauseButton.classList.toggle('opacity-50', gameState.gameOver);
+
+
+            // Message Box
+            const messageBox = document.getElementById('message-box');
+            messageBox.classList.remove('bg-red-700', 'bg-blue-600');
+            if (gameState.gameOver) {
+                 messageBox.classList.remove('hidden');
+                 messageBox.classList.add('bg-red-700');
+                 messageBox.innerText = gameState.message;
+            } else if (gameState.isPaused) {
+                 messageBox.classList.remove('hidden');
+                 messageBox.classList.add('bg-blue-600');
+                 messageBox.innerText = 'GAME PAUSED: Your progress is safely stored.';
+            } else if (gameState.message) {
+                 messageBox.classList.remove('hidden');
+                 messageBox.innerText = gameState.message;
+            } else {
+                 messageBox.classList.add('hidden');
+            }
+
+            // Ascend Button Control
+            const ascendButton = document.getElementById('ascend-button');
+            const canAscend = gameState.depth >= 500;
+            const prpGained = canAscend ? Math.floor(gameState.depth / 500) : 0;
+            
+            ascendButton.classList.toggle('hidden', gameState.gameOver && !canAscend && gameState.permanentResearchPoints === 0);
+
+            if (canAscend) {
+                ascendButton.innerText = `Ascend: Gain ${prpGained} PRP (Depth: ${gameState.depth.toFixed(0)}m)`;
+                ascendButton.disabled = gameState.gameOver || gameState.isPaused;
+                ascendButton.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-purple-800');
+                ascendButton.classList.add('bg-purple-700', 'hover:bg-purple-500');
+            } else {
+                ascendButton.innerText = `Ascend (Reach 500m)`;
+                ascendButton.disabled = true;
+                ascendButton.classList.add('opacity-50', 'cursor-not-allowed', 'bg-purple-800');
+                ascendButton.classList.remove('bg-purple-700', 'hover:bg-purple-500');
+            }
+
+            renderPrpShop(); 
+            renderSkillTree();
+        }
+        
+        /** Renders the Permanent Research Points (PRP) Shop. */
+        function renderPrpShop() {
+            const shopContainer = document.getElementById('prp-shop-container');
+            if (!shopContainer) return;
+            shopContainer.innerHTML = '';
+            
+            for (const id in PRP_UPGRADES) {
+                const upgrade = PRP_UPGRADES[id];
+                const currentTier = gameState.prpTiers[id] || 0;
+                const nextTier = currentTier + 1;
+                
+                const isMax = currentTier >= upgrade.maxTier;
+                const canAfford = gameState.permanentResearchPoints >= upgrade.cost;
+                
+                let buttonClass = 'p-3 rounded-xl text-white font-semibold shadow-md transition duration-150 transform w-full';
+                let action = `onclick="buyPrpUpgrade('${id}')"`;
+                let statusText = '';
+                
+                const currentStatValue = gameState[upgrade.stat] ? gameState[upgrade.stat].toFixed(2) : 'N/A';
+
+                if (isMax) {
+                    buttonClass += ' bg-gray-600 opacity-90 cursor-default';
+                    action = '';
+                    statusText = `<span class="text-yellow-300">MAX TIER (${upgrade.maxTier})</span>`;
+                } else if (gameState.isPaused) {
+                    buttonClass += ' bg-blue-900 opacity-50 cursor-not-allowed';
+                    action = '';
+                    statusText = 'Game is paused';
+                } else if (canAfford) {
+                    buttonClass += ' bg-purple-700 hover:bg-purple-500 cursor-pointer hover:scale-[1.02]';
+                    statusText = `Cost: ${upgrade.cost} PRP`;
+                } else {
+                    buttonClass += ' bg-red-800 opacity-70 cursor-not-allowed';
+                    action = '';
+                    statusText = `Needs ${upgrade.cost} PRP`;
+                }
+
+                const nextEffect = isMax ? 'N/A' : `${upgrade.effect} (Tier ${nextTier})`;
+
+                const upgradeDiv = document.createElement('div');
+                upgradeDiv.className = 'bg-gray-800 p-4 rounded-xl shadow-inner flex flex-col justify-between border border-gray-700';
+                upgradeDiv.innerHTML = `
+                    <div>
+                        <h4 class="text-xl font-bold text-purple-300">${upgrade.name}</h4>
+                        <p class="text-sm text-gray-300 mt-1">Tier: ${currentTier}/${upgrade.maxTier}</p>
+                        <p class="text-sm text-gray-400">Current Base Value: ${currentStatValue}</p>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-sm font-semibold text-green-400">${nextEffect}</p>
+                        <button class="${buttonClass} mt-3" ${action} ${isMax ? 'disabled' : ''}>
+                            ${isMax ? 'MAXED OUT' : `Upgrade (${statusText})`}
+                        </button>
+                    </div>
+                `;
+                shopContainer.appendChild(upgradeDiv);
+            }
+        }
+
+
+        /** Renders the Skill Tree buttons and status. */
+        function renderSkillTree() {
+            const skillTreeContainer = document.getElementById('skill-tree-container');
+            skillTreeContainer.innerHTML = '';
+
+            const tiers = {
+                'A': { title: 'Tier 1: Foundation (Economy, Speed, Sustain)', color: 'yellow', container: null },
+                'B': { title: 'Tier 2: Specialization', color: 'cyan', container: null },
+                'C': { title: 'Tier 3: Core Upgrades', color: 'green', container: null },
+                'D': { title: 'Tier 4: Deeper Specialization', color: 'orange', container: null }, 
+                'E': { title: 'Tier 5: Mastery', color: 'red', container: null },
+				'F': { title: 'Tier 6: Loganite', color: 'purple', container: null },
+				'G': { title: 'Tier 7: Foundations of Magic', color: 'pink', container: null},
+            };
+
+            for (const tierId in tiers) {
+                const tierInfo = tiers[tierId];
+                const h3 = document.createElement('h3');
+                h3.className = `text-xl font-semibold text-${tierInfo.color}-300 mb-2 mt-4 text-center`;
+                h3.textContent = tierInfo.title;
+                skillTreeContainer.appendChild(h3);
+                
+                const tierDiv = document.createElement('div');
+                tierDiv.id = `tier-${tierId}`;
+                tierDiv.className = 'flex flex-col md:flex-row justify-between gap-4 mb-6';
+                skillTreeContainer.appendChild(tierDiv);
+                
+                tierInfo.container = tierDiv;
+            }
+
+            for (const id in SKILLS) {
+                const skill = SKILLS[id];
+                const isUnlocked = gameState.unlockedSkills.includes(id);
+                const prereqMet = !skill.prereq || gameState.unlockedSkills.includes(skill.prereq);
+                const canAfford = gameState.ore >= skill.cost;
+                
+                let buttonClass = 'p-3 m-1 rounded-lg text-white font-semibold shadow-lg transition duration-150 transform hover:scale-105';
+                let action = `onclick="buySkill('${id}')"`;
+                
+                if (isUnlocked) {
+                    buttonClass += ' bg-yellow-600 border-2 border-yellow-400 opacity-90 cursor-default';
+                    action = '';
+                } else if (!prereqMet) {
+                    buttonClass += ' bg-gray-700 cursor-not-allowed';
+                    action = '';
+                } else if (!canAfford) {
+                    buttonClass += ' bg-red-800 opacity-70 cursor-not-allowed';
+                    action = '';
+                } else {
+                    buttonClass += ' bg-green-700 hover:bg-green-500 cursor-pointer';
+                }
+                
+                if (gameState.isPaused) {
+                    buttonClass += ' opacity-50 cursor-not-allowed';
+                    action = '';
+                }
+
+                const tier = id[0];
+                const skillElement = document.createElement('div');
+                skillElement.className = `flex flex-col items-center p-2 w-full md:w-1/3`;
+                skillElement.innerHTML = `
+                    <button id="skill-${id}" class="${buttonClass} w-full" ${action}>
+                        <span class="text-lg">${skill.name}</span>
+                        <br>
+                        <span class="text-sm font-light">${skill.effect}</span>
+                        <div class="mt-1 text-xs">
+                            ${isUnlocked ? 'UNLOCKED' : `Cost: ${skill.cost.toFixed(0)} Ore`}
+                            ${!prereqMet ? `<br><span class="text-red-300">Requires: ${SKILLS[skill.prereq].name}</span>` : ''}
+                        </div>
+                    </button>
+                `;
+                
+                if (tiers[tier] && tiers[tier].container) {
+                    tiers[tier].container.appendChild(skillElement);
+                }
+            }
+        }
+
+        // --- INIT ---
+        window.onload = setupFirebase;
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #e5e7eb;
+        }
+        .progress-bar {
+            /* Keep smooth transitions for visual changes, but they will update less frequently */
+            transition: width 1.0s ease-in-out; 
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+    <div id="user-id-display" class="text-xs text-gray-500 mb-2 text-right">Loading User ID...</div>
+    <div class="max-w-6xl mx-auto bg-gray-900 rounded-xl shadow-2xl p-6 md:p-10">
+        <h1 class="text-4xl font-bold text-yellow-500 mb-2 border-b border-gray-700 pb-3">
+            The Deep Mine
+        </h1>
+        
+        <!-- PERMANENT STATS DISPLAY -->
+        <div id="permanent-stats-display" class="text-lg font-bold text-purple-400 mb-4 text-center">
+            Permanent Research Points (PRP): 0
+        </div>
+        
+        <p class="text-gray-400 mb-6">
+            Drill deep, manage your resources, and specialize your crew with a branching skill tree.
+            You must choose your path: **Speed**, **Economy**, or **Safety**.
+        </p>
+
+        <!-- PRP SHOP SECTION -->
+        <h2 class="text-3xl font-bold text-purple-400 mb-4 border-b border-gray-700 pb-2">
+            PRP Shop (Permanent Upgrades)
+        </h2>
+        <div id="prp-shop-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- PRP Upgrades will be dynamically rendered here -->
+        </div>
+        
+        <!-- Game Over / Message Box -->
+        <div id="message-box" class="hidden p-4 mb-4 rounded-lg bg-red-600 font-semibold text-center shadow-inner">
+            <!-- Message text will be injected here -->
+        </div>
+
+        <!-- STATS PANEL -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Ore Count -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-xl border-t-4 border-yellow-500">
+                <p class="text-xl text-yellow-500 font-bold">ORE RESERVES</p>
+                <p id="ore-count" class="text-3xl mt-1">0.0 Ore</p>
+            </div>
+            <!-- Depth -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-xl border-t-4 border-cyan-500">
+                <p class="text-xl text-cyan-500 font-bold">CURRENT DEPTH</p>
+                <p id="depth-count" class="text-3xl mt-1">0.0m</p>
+            </div>
+             <!-- Max Depth -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-xl border-t-4 border-purple-500">
+                <p class="text-xl text-purple-500 font-bold">MAX DEPTH</p>
+                <p id="max-depth-display" class="text-3xl mt-1">Record Depth: 0.0m</p>
+            </div>
+            <!-- Resource Type -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-xl border-t-4 border-green-500">
+                <p class="text-xl text-green-500 font-bold">MINING RESOURCE</p>
+                <p id="resource-type" class="text-3xl mt-1">Copper</p>
+            </div>
+        </div>
+
+        <!-- RESOURCE BARS & CONTROLS -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-8">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Status & Controls</h2>
+
+            <!-- Power Bar -->
+            <div class="mb-4">
+                <p id="power-bar-text" class="text-sm font-medium mb-1 text-red-400">Power: 100/100 (2.0/s)</p>
+                <div class="w-full bg-gray-700 rounded-full h-4">
+                    <div id="power-bar" class="progress-bar h-4 rounded-full bg-red-600" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Oxygen Bar -->
+            <div class="mb-4">
+                <p id="oxygen-bar-text" class="text-sm font-medium mb-1 text-teal-400">Oxygen: 100/100 (2.0/s)</p>
+                <div class="w-full bg-gray-700 rounded-full h-4">
+                    <div id="oxygen-bar" class="progress-bar h-4 rounded-full bg-teal-600" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Temperature Bar -->
+            <div class="mb-6">
+                <p id="temp-bar-text" class="text-sm font-medium mb-1 text-orange-400">Heat: 0% (x1.0 Power Multiplier)</p>
+                <div class="w-full bg-gray-700 rounded-full h-4">
+                    <div id="temp-bar" class="progress-bar h-4 rounded-full bg-yellow-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="drill-button" onclick="toggleDrill()" class="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold shadow-md transition duration-150">
+                    Start Drill
+                </button>
+                <button id="pause-button" onclick="togglePause()" class="px-6 py-3 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold shadow-md transition duration-150">
+                    Pause Game
+                </button>
+                <button onclick="refillPower()" class="px-6 py-3 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold shadow-md transition duration-150">
+                    Refill Power (5 Ore)
+                </button>
+                <button onclick="refillOxygen()" class="px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-bold shadow-md transition duration-150">
+                    Refill Oxygen (10 Ore)
+                </button>
+                <button id="ascend-button" onclick="ascendGame()" class="px-6 py-3 rounded-xl bg-purple-700 hover:bg-purple-500 text-white font-bold shadow-md transition duration-150">
+                    Ascend: Gain PRP (Depth: 0m)
+                </button>
+                <button onclick="restartGame()" class="px-6 py-3 rounded-xl bg-gray-600 hover:bg-gray-500 text-white font-bold shadow-md transition duration-150">
+                    Restart Game
+                </button>
+            </div>
+        </div>
+
+        <!-- SKILL TREE SECTION -->
+        <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">
+            Skill Tree: Specialization Paths (Ore Cost)
+        </h2>
+        <div id="skill-tree-container" class="bg-gray-800 p-6 rounded-xl shadow-inner">
+            
+            <!-- Skill tree contents will be dynamically rendered here -->
+        </div>
+    </div>
+</body>
+</html>
