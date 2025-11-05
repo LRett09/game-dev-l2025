@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Misaligned Mover</title>
+    <!-- Load Tailwind CSS for easy responsive styling of the container -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bungee+Outline&family=Inter:wght=400;700;800&display=swap');
+
+        /* Custom CSS variables for chaos scaling, updated by JavaScript */
+        :root {
+            --chaos-saturation: 40%;
+            --chaos-lightness: 50%;
+            --chaos-speed: 20s;
+            /* Damping Multiplier: 1 by default, set higher for Ice Physics */
+            --player-damping-mult: 1; 
+        }
+
+        /* Custom CSS for the game environment */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1f2937 0%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        /* --- BACKGROUND CHAOS STYLES --- */
+        #bg-chaos {
+            filter: blur(2px);
+            opacity: 0.7; 
+        }
+
+        .distractor {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: hsl(calc(var(--i) * 72), var(--chaos-saturation), var(--chaos-lightness));
+            animation: chaoticMove var(--chaos-speed) infinite alternate ease-in-out;
+            transform: translate(calc(var(--i) * 30vw), calc(var(--i) * 40vh)); 
+            box-shadow: 0 0 150px 50px rgba(255, 255, 255, 0.05); 
+        }
+
+        @keyframes chaoticMove {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(calc(var(--i) * 250px), calc(var(--i) * -500px)) scale(1.2);
+            }
+            66% {
+                transform: translate(calc(var(--i) * -400px), calc(var(--i) * 400px)) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+        /* --- END BACKGROUND CHAOS STYLES --- */
+
+
+        #game-container {
+            background-color: #fef3c7; /* Light yellow background */
+            padding: 20px;
+            border: 8px solid #f59e0b;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 0 10px #fbbf24;
+            max-width: 95%;
+            width: 700px;
+            text-align: center;
+            position: relative; 
+            z-index: 10; 
+        }
+        
+        h1 {
+            font-family: 'Bungee Outline', cursive;
+            font-size: 2.5rem;
+            color: #ef4444;
+            margin-bottom: 0.5rem;
+        }
+
+        #controls-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #374151;
+            border-radius: 10px;
+            color: #f9fafb;
+            border: 2px solid #1f2937;
+            font-size: 0.9rem;
+        }
+        
+        #controls-panel .control-scheme {
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        #controls-panel .smart-controls {
+            background-color: #10b98120;
+            border: 1px dashed #10b981;
+            color: #6ee7b7;
+        }
+        
+        #controls-panel .stupid-controls {
+            background-color: #ef444420;
+            border: 1px dashed #ef4444;
+            color: #fca5a5;
+            margin-top: 10px;
+        }
+        
+        #controls-panel .stupid-controls b {
+            color: #fcd34d;
+        }
+
+        #gameCanvas {
+            border: 4px solid #1f2937;
+            background-color: #ffffff;
+            touch-action: none; 
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+            width: 100%; 
+            max-width: 660px;
+            height: 400px;
+            transition: filter 0.1s;
+        }
+
+        .score-board {
+            font-size: 1.1rem; /* Slightly smaller to fit all info */
+            color: #1f2937;
+            font-weight: bold;
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #fcd34d; /* Yellow background for emphasis */
+            border-radius: 8px;
+        }
+        
+        .score-board .score-title {
+            font-size: 1.3rem;
+            color: #92400e;
+        }
+        
+        .score-board .high-score-user {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: #4b5563;
+        }
+
+
+        /* Message box styles */
+        .message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 5px solid #ef4444;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 80%; 
+            max-width: 400px;
+        }
+
+        .message-box h2 {
+            font-family: 'Bungee Outline', cursive;
+            color: #ef4444;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .message-box p {
+            font-size: 1.2rem;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+
+        .message-box button {
+            background-color: #4ade80;
+            color: #1f2937;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px #1f2937;
+        }
+
+        .message-box button:hover {
+            background-color: #10b981;
+        }
+        .message-box button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #1f2937;
+        }
+        
+        /* Control flip message styles */
+        #flipMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%); 
+            z-index: 5; 
+            pointer-events: none; 
+        }
+
+        #flipText {
+            display: none; 
+            font-family: 'Bungee Outline', cursive;
+            font-size: 1.2rem;
+            white-space: nowrap;
+            animation: flashScale 0.2s ease-in-out infinite alternate;
+        }
+
+        /* --- SHREK CHAOS STYLES & RANDOM EVENT MESSAGE --- */
+
+        .chaos-flash-box {
+            position: fixed; 
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.7);
+            z-index: 1000; 
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none; 
+            transition: opacity 0.3s, transform 0.3s; 
+        }
+
+        .chaos-flash-box.visible {
+            display: flex;
+            animation: shrekPop 0.3s ease-out forwards;
+            opacity: 1; 
+        }
+        
+        #eventMessage {
+            background-color: #fca5a5;
+            border-color: #ef4444;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.7);
+        }
+        #eventMessage .chaos-text {
+            font-family: 'Bungee Outline', cursive;
+            font-size: 1.5rem;
+            color: #1f2937;
+            text-shadow: 2px 2px #fef3c7;
+        }
+        
+        #shrekTemplate {
+            display: none !important; 
+        }
+        .shrek-message-box {
+            background-color: #c084fc; 
+            border-color: #22c55e;
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.7);
+            border: 7px solid #fbbf24;
+            width: 300px;
+            height: 350px;
+        }
+
+        .shrek-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid #fcd34d;
+            margin-bottom: 10px;
+        }
+
+        .shrek-text {
+            font-family: 'Bungee Outline', cursive;
+            font-size: 1.5rem;
+            color: #1f2937;
+            text-shadow: 2px 2px #fcd34d;
+            white-space: nowrap;
+        }
+
+        @keyframes shrekPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* --- END SHREK CHAOS STYLES --- */
+
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            #controls-panel {
+                font-size: 0.8rem;
+                padding: 8px;
+            }
+            #controls-panel b {
+                font-size: 1rem;
+            }
+            .score-board {
+                font-size: 0.9rem;
+            }
+            .score-board .score-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    
+    <!-- Background Chaos Distraction Layer -->
+    <div id="bg-chaos" class="fixed inset-0 pointer-events-none overflow-hidden opacity-50">
+        <div class="distractor" style="--i:1;"></div>
+        <div class="distractor" style="--i:2;"></div>
+        <div class="distractor" style="--i:3;"></div>
+        <div class="distractor" style="--i:4;"></div>
+        <div class="distractor" style="--i:5;"></div>
+        <div class="distractor" style="--i:6;"></div>
+        <div class="distractor" style="--i:7;"></div>
+        <div class="distractor" style="--i:8;"></div>
+        <div class="distractor" style="--i:-1;"></div>
+        <div class="distractor" style="--i:-2;"></div>
+        <div class="distractor" style="--i:-3;"></div>
+        <div class="distractor" style="--i:-4;"></div>
+        <div class="distractor" style="--i:-5;"></div>
+        <div class="distractor" style="--i:-6;"></div>
+        <div class="distractor" style="--i:-7;"></div>
+        <div class="distractor" style="--i:-8;"></div>
+    </div>
+
+    <div id="game-container">
+        <h1>The Misaligned Mover</h1>
+        <p class="text-sm text-gray-700 font-semibold mb-2">A game designed to fight your brain!</p>
+        
+        <canvas id="gameCanvas" width="660" height="400"></canvas>
+
+        <!-- Control flip messages -->
+        <div id="flipMessage">
+            <span class="inline-block bg-yellow-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-xl border-4 border-red-500" id="flipText">
+                CONTROLS FLIPPED!
+            </span>
+        </div>
+        
+        <!-- Score and High Score Display -->
+        <div class="score-board">
+            <span class="score-title">Score: <span id="scoreValue">0</span></span>
+            <br class="sm:hidden"> <!-- Break for mobile -->
+            <span class="score-title">High Score: <span id="highScoreValue">0</span></span> 
+            <span class="high-score-user">(by <span id="highScoreUser">...</span>)</span>
+        </div>
+
+        <div id="controls-panel">
+            <p><strong>DUAL CONTROL CHAOS:</strong></p>
+            
+            <div class="control-scheme smart-controls">
+                <p>
+                    **SMART CONTROLS (Always Pure Cardinal):** Use <b class="text-yellow-400">ARROW KEYS</b> for guaranteed UP, DOWN, LEFT, RIGHT movement.
+                </p>
+            </div>
+            
+            <div class="control-scheme stupid-controls">
+                <p>
+                    **STUPID CONTROLS (Flipping):** W, A, S, D are currently mapped to: <span id="currentMappingDisplay"><b class="text-yellow-400">Loading...</b></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Hidden Game Over/Start Message Box -->
+        <div id="messageBox" class="message-box">
+            <h2 id="messageTitle">Game Over!</h2>
+            <p id="messageText">You achieved a score of <span id="finalScore">0</span>.</p>
+            <button id="startButton">Try Again</button>
+        </div>
+    </div>
+    
+    <!-- Shrek Template Message Box - Hidden, used for cloning -->
+    <div id="shrekTemplate" class="chaos-flash-box shrek-message-box">
+        <img id="shrekImageTemplate" alt="Shrek placeholder image" class="shrek-image">
+        <p class="shrek-text">hey guys its me shrek</p>
+    </div>
+    
+    <!-- New Random Event Flash Message Box -->
+    <div id="eventMessage" class="chaos-flash-box">
+        <p class="chaos-text" id="eventMessageText">CHAOS EVENT!</p>
+    </div>
+
+    <!-- MAIN GAME SCRIPT (Module for Firebase imports) -->
+    <script type="module">
+        // --- FIREBASE IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, runTransaction, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- GLOBAL FIREBASE/ENV VARIABLES ---
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Firestore instances and user info
+        let db = null;
+        let auth = null;
+        let currentUserId = null;
+        
+        // High Score State
+        let currentHighScore = 0;
+        let currentHighScoreUser = '...';
+        
+        // Firestore Paths (Public Data: /artifacts/{appId}/public/data/highscores/global_high_score)
+        const HIGH_SCORE_DOC_PATH = `artifacts/${appId}/public/data/highscores/global_high_score`;
+
+
+        // --- GAME CONFIGURATION ---
+        const GAME_CONFIG = {
+            CANVAS_HEIGHT: 400,
+            PLAYER_SIZE: 20,
+            PLAYER_MAX_SPEED: 5,
+            PLAYER_WALL_BOUNCE: 1.15,
+            TARGET_SIZE: 15,
+            ENEMY_SIZE: 25,
+            DAMPING_DEFAULT: 0.92,
+            ACCEL_RATE: 0.5,
+            TARGET_SPAWN_RATE: 120,
+            ENEMY_SPAWN_RATE: 300,
+            ENEMY_WARNING_FRAMES: 60,
+            DASH_SPEED: 20, 
+            DASH_WARNING_FRAMES: 40,
+            JITTER_MAGNITUDE: 0.75,
+            MESSAGE_DISPLAY_TIME: 1000,
+            SHREK_DISPLAY_TIME: 1500,
+            RANDOM_EVENT_CHANCE: 0.35, 
+            JOLT_FORCE: 30,
+            CONFUSION_DURATION: 3000,
+            ICE_DURATION: 5000,
+            ICE_DAMPING_FACTOR: 0.995,
+            INVISIBLE_THRESHOLD: 25,
+            INVISIBLE_DURATION: 2000, 
+            INVISIBLE_ALPHA: 0.0, 
+            STINKY_DURATION: 2000, 
+            STINKY_REPULSION_FORCE: 1.5,
+            
+            // Dash Scaling Configuration
+            DASH_BASE_CHANCE: 0.05,        
+            DASH_PER_ENEMY_SCALING: 0.02,  
+            DASH_MAX_CHANCE: 0.5,          
+            
+            // Shrek Popup Configuration
+            SHREK_IMAGE_URL: 'https://placehold.co/150x150/22c55e/1f2937?text=SHREK',
+            SHREK_POSITION_MIN_VW: -20, 
+            SHREK_POSITION_MAX_VW: 110,
+        };
+
+        // --- STUPID CONTROLS MAPPING ---
+        const STUPID_SETS_INFO = [
+            { 
+                name: "Standard Inversion (W=D, S=U, A=R, D=L)", 
+                map: { 'W': { dx: 0, dy: 1 }, 'S': { dx: 0, dy: -1 }, 'A': { dx: 1, dy: 0 }, 'D': { dx: -1, dy: 0 } } 
+            },
+            { 
+                name: "WASD Scramble 1 (W=R, S=L, A=U, D=D)", 
+                map: { 'W': { dx: 1, dy: 0 }, 'S': { dx: -1, dy: 0 }, 'A': { dx: 0, dy: -1 }, 'D': { dx: 0, dy: 1 } }
+            },
+            { 
+                name: "WASD Scramble 2 (W=L, S=R, A=D, D=U)", 
+                map: { 'W': { dx: -1, dy: 0 }, 'S': { dx: 1, dy: 0 }, 'A': { dx: 0, dy: 1 }, 'D': { dx: 0, dy: -1 } }
+            },
+            { 
+                name: "WASD Scramble 3 (W=U, S=D, A=L, D=R - The 'Normal' one)", 
+                map: { 'W': { dx: 0, dy: -1 }, 'S': { dx: 0, dy: 1 }, 'A': { dx: -1, dy: 0 }, 'D': { dx: 1, dy: 0 } }
+            },
+            { 
+                name: "WASD Scramble 4 (W=U, S=L, A=R, D=D)", 
+                map: { 'W': { dx: 0, dy: -1 }, 'S': { dx: -1, dy: 0 }, 'A': { dx: 1, dy: 0 }, 'D': { dx: 0, dy: 1 } }
+            }
+        ];
+        
+        // --- SMART CONTROLS MAPPING ---
+        const SMART_CONTROLS = {
+            'ARROWUP': { dx: 0, dy: -1 },
+            'ARROWDOWN': { dx: 0, dy: 1 },
+            'ARROWLEFT': { dx: -1, dy: 0 },
+            'ARROWRIGHT': { dx: 1, dy: 0 }
+        };
+        
+        // Key Sets for Listeners
+        const VALID_STUPID_KEYS = new Set(['W', 'A', 'S', 'D']);
+        const VALID_SMART_KEYS = new Set(['ARROWUP', 'ARROWDOWN', 'ARROWLEFT', 'ARROWRIGHT']);
+        const ALL_VALID_KEYS = new Set([...VALID_STUPID_KEYS, ...VALID_SMART_KEYS]);
+
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreValueEl = document.getElementById('scoreValue');
+        const highScoreValueEl = document.getElementById('highScoreValue');
+        const highScoreUserEl = document.getElementById('highScoreUser');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startButton = document.getElementById('startButton');
+        const currentMappingDisplay = document.getElementById('currentMappingDisplay');
+        const flipTextElement = document.getElementById('flipText');
+        const shrekTemplate = document.getElementById('shrekTemplate');
+        const shrekImageTemplate = document.getElementById('shrekImageTemplate');
+        const eventMessage = document.getElementById('eventMessage');
+        const eventMessageText = document.getElementById('eventMessageText');
+        const root = document.documentElement; 
+
+        // Set Shrek Image URL (from config)
+        shrekImageTemplate.src = GAME_CONFIG.SHREK_IMAGE_URL;
+        shrekImageTemplate.onerror = () => shrekImageTemplate.src = GAME_CONFIG.SHREK_IMAGE_URL; 
+        
+        // --- GAME STATE ---
+        let player = {};
+        let targets = [];
+        let enemies = []; 
+        let score = 0;
+        let frameCount = 0;
+        let isGameOver = true;
+        let keysPressed = {};
+        let currentStupidKeys = STUPID_SETS_INFO[0].map; 
+        let currentMappingIndex = 0;
+        let maxEnemies = 0; 
+        let isColorConfused = false;
+        let isIcePhysic = false; 
+        let isInvisible = false;
+        let isStinkyRepel = false; 
+        let currentDamping = GAME_CONFIG.DAMPING_DEFAULT;
+        let activeShrekPopups = []; 
+        let isDashWarningActive = false; 
+        let isFirebaseReady = false;
+
+
+        // --- FIREBASE FUNCTIONS ---
+        async function setupFirebase() {
+            try {
+                // setLogLevel('debug'); // Optional: for debugging firestore
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // Set userId after successful sign-in
+                currentUserId = auth.currentUser?.uid || crypto.randomUUID();
+                
+                listenForHighScore();
+                
+                isFirebaseReady = true;
+                console.log("Firebase setup complete. User ID:", currentUserId);
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                // Fallback: If Firebase fails, the game should still load, just without persistence
+                isFirebaseReady = true; 
+            }
+        }
+        
+        function listenForHighScore() {
+            if (!db) return;
+            const docRef = doc(db, HIGH_SCORE_DOC_PATH);
+
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentHighScore = data.score || 0;
+                    // Format the user ID to be recognizable but not too long
+                    currentHighScoreUser = data.userId ? `${data.userId.substring(0, 4)}...${data.userId.substring(data.userId.length - 4)}` : 'UNKNOWN';
+                } else {
+                    currentHighScore = 0;
+                    currentHighScoreUser = '...';
+                }
+                highScoreValueEl.textContent = currentHighScore;
+                highScoreUserEl.textContent = currentHighScoreUser;
+            }, (error) => {
+                console.error("Error listening to high score:", error);
+            });
+        }
+        
+        async function saveHighScore(newScore, userId) {
+            if (!db || !userId) return;
+            
+            const docRef = doc(db, HIGH_SCORE_DOC_PATH);
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(docRef);
+                    
+                    let currentGlobalScore = 0;
+                    if (docSnap.exists()) {
+                        currentGlobalScore = docSnap.data().score || 0;
+                    }
+                    
+                    if (newScore > currentGlobalScore) {
+                        transaction.set(docRef, {
+                            score: newScore,
+                            userId: userId,
+                            timestamp: serverTimestamp()
+                        });
+                        console.log(`New High Score saved: ${newScore}`);
+                    }
+                });
+            } catch (error) {
+                console.error("Transaction failed: Could not save high score.", error);
+            }
+        }
+
+        // --- HELPER FUNCTIONS ---
+
+        function getRandomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.size &&
+                   obj1.x + obj1.size > obj2.x &&
+                   obj1.y < obj2.y + obj2.size &&
+                   obj1.y + obj1.size > obj2.y;
+        }
+        
+        function updateControlDisplay(setName) {
+            currentMappingDisplay.innerHTML = `<b class="text-yellow-400">${setName}</b>`;
+        }
+
+        function flashFlipMessage(setName) {
+            const simpleName = setName.split('(')[0].trim(); 
+            flipTextElement.textContent = `CONTROLS FLIPPED! (${simpleName})`;
+            flipTextElement.style.display = 'inline-block';
+            
+            setTimeout(() => {
+                flipTextElement.style.display = 'none';
+            }, GAME_CONFIG.MESSAGE_DISPLAY_TIME);
+        }
+        
+        function flashEventMessage(text) {
+            eventMessageText.textContent = text;
+            eventMessage.classList.add('visible');
+            
+            setTimeout(() => {
+                eventMessage.classList.remove('visible');
+            }, GAME_CONFIG.MESSAGE_DISPLAY_TIME);
+        }
+        
+        function triggerStupidFlip() {
+             let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * STUPID_SETS_INFO.length);
+            } while (newIndex === currentMappingIndex); 
+
+            currentMappingIndex = newIndex;
+            currentStupidKeys = STUPID_SETS_INFO[currentMappingIndex].map;
+            
+            updateControlDisplay(STUPID_SETS_INFO[currentMappingIndex].name);
+            flashFlipMessage(STUPID_SETS_INFO[currentMappingIndex].name);
+
+            player.color = `hsl(${Math.random() * 360}, 90%, 60%)`;
+            setTimeout(() => player.color = '#3b82f6', 150);
+            
+            maxEnemies += 2;
+        }
+
+        function getShrekPopupCount() {
+            let count = 1; 
+            if (Math.random() < 0.5) { 
+                count++; 
+                if (Math.random() < 0.5) { 
+                    count++; 
+                    if (Math.random() < 0.5) { 
+                        count++; 
+                        if (Math.random() < 0.5) { 
+                            count++; 
+                            if (Math.random() < 0.5) { 
+                                count++; 
+                            }
+                        }
+                    }
+                }
+            }
+            return count;
+        }
+
+        function cleanupShrekPopups() {
+            activeShrekPopups.forEach(popup => {
+                // Animate fade-out before removal
+                popup.style.opacity = '0';
+                popup.style.transform = `scale(0.8)`;
+                setTimeout(() => popup.remove(), 300);
+            });
+            activeShrekPopups = [];
+        }
+
+        function triggerShrekEvent() {
+            if (isGameOver) return;
+            
+            const numPopups = getShrekPopupCount();
+            cleanupShrekPopups(); 
+
+            const phrases = ["hey guys its me shrek", "GET OUTTA MY SWAMP!", "someBODY once told me...", "It's all ogre now!"];
+            
+            for (let i = 0; i < numPopups; i++) {
+                const clone = shrekTemplate.cloneNode(true);
+                clone.id = 'shrekClone' + i; 
+                clone.classList.remove('shrek-message-box'); 
+                clone.classList.add('chaos-flash-box', 'shrek-message-box'); 
+                
+                const topPercent = getRandomRange(GAME_CONFIG.SHREK_POSITION_MIN_VW, GAME_CONFIG.SHREK_POSITION_MAX_VW);
+                const leftPercent = getRandomRange(GAME_CONFIG.SHREK_POSITION_MIN_VW, GAME_CONFIG.SHREK_POSITION_MAX_VW);
+                const randomScale = getRandomRange(0.8, 1.2); 
+                const randomRotate = getRandomRange(-5, 5); 
+
+                clone.style.top = `${topPercent}vh`;
+                clone.style.left = `${leftPercent}vw`;
+                
+                clone.style.transform = `scale(${randomScale}) rotate(${randomRotate}deg)`;
+                
+                clone.querySelector('.shrek-text').textContent = phrases[Math.floor(Math.random() * phrases.length)];
+
+                clone.classList.add('visible');
+                clone.style.display = 'flex'; 
+                document.body.appendChild(clone);
+                activeShrekPopups.push(clone);
+            }
+            
+            setTimeout(cleanupShrekPopups, GAME_CONFIG.SHREK_DISPLAY_TIME);
+        }
+
+        // --- CHAOS EVENT TRIGGERS (Dash Logic is here) ---
+        
+        function triggerControlJolt() {
+            if (isGameOver) return;
+            flashEventMessage("CONTROL JOLT!");
+            
+            const angle = Math.random() * 2 * Math.PI;
+            const joltX = Math.cos(angle) * GAME_CONFIG.JOLT_FORCE;
+            const joltY = Math.sin(angle) * GAME_CONFIG.JOLT_FORCE;
+            
+            player.vx += joltX;
+            player.vy += joltY;
+        }
+
+        function triggerColorConfusion() {
+            if (isGameOver || isColorConfused) return;
+            flashEventMessage("COLOR CONFUSION: Swap!");
+            isColorConfused = true;
+            
+            setTimeout(() => {
+                isColorConfused = false;
+            }, GAME_CONFIG.CONFUSION_DURATION);
+        }
+        
+        function triggerIcePhysics() {
+            if (isGameOver || isIcePhysic) return;
+            flashEventMessage("ICE PHYSICS!");
+            isIcePhysic = true;
+            
+            currentDamping = GAME_CONFIG.ICE_DAMPING_FACTOR;
+            
+            root.style.setProperty('--player-damping-mult', 1 / GAME_CONFIG.DAMPING_DEFAULT * GAME_CONFIG.ICE_DAMPING_FACTOR);
+
+
+            setTimeout(() => {
+                isIcePhysic = false;
+                currentDamping = GAME_CONFIG.DAMPING_DEFAULT; 
+                root.style.setProperty('--player-damping-mult', 1);
+            }, GAME_CONFIG.ICE_DURATION);
+        }
+        
+        function triggerInvisibility() {
+            if (isGameOver || isInvisible) return;
+            flashEventMessage("NOW YOU DON'T SEE ME!");
+            isInvisible = true;
+
+            setTimeout(() => {
+                isInvisible = false;
+            }, GAME_CONFIG.INVISIBLE_DURATION);
+        }
+        
+        function triggerStinkyRepel() {
+            if (isGameOver || isStinkyRepel) return;
+            flashEventMessage("STINKY! (Repel Active)");
+            isStinkyRepel = true;
+
+            setTimeout(() => {
+                isStinkyRepel = false;
+            }, GAME_CONFIG.STINKY_DURATION);
+        }
+        
+        function triggerDashEvent() {
+            if (isGameOver || isDashWarningActive || isInvisible) return;
+            
+            // Only dash enemies that are active and not already warning/dashing
+            const activeEnemies = enemies.filter(e => !e.isWarning && !e.isDashWarning && !e.isDashing);
+            if (activeEnemies.length === 0) return;
+            
+            flashEventMessage("DASH ATTACK INCOMING!");
+            isDashWarningActive = true;
+            
+            const playerTargetX = player.x + player.size / 2;
+            const playerTargetY = player.y + player.size / 2;
+            
+            // Dash a maximum of 3 enemies, or fewer if not enough are available
+            const dashCount = Math.min(3, Math.ceil(Math.random() * activeEnemies.length));
+            const shuffledEnemies = activeEnemies.sort(() => 0.5 - Math.random());
+            
+            for (let i = 0; i < dashCount; i++) {
+                const e = shuffledEnemies[i];
+                
+                e.isDashWarning = true;
+                e.isDashing = false; 
+                e.dashFrameStart = frameCount;
+                
+                const eCenterX = e.x + e.size / 2;
+                const eCenterY = e.y + e.size / 2;
+                
+                let dx = playerTargetX - eCenterX;
+                let dy = playerTargetY - eCenterY;
+                const dist = Math.hypot(dx, dy);
+                
+                if (dist === 0) { e.isDashWarning = false; continue; }
+
+                e.dashPath = {
+                    dx: (dx / dist), 
+                    dy: (dy / dist) 
+                };
+                e.vx = 0;
+                e.vy = 0;
+            }
+        }
+        
+        function triggerRandomEvent() {
+            if (isGameOver) return;
+            
+            const activeEnemiesCount = enemies.filter(e => !e.isWarning && !e.isDashWarning && !e.isDashing).length;
+
+            // --- 1. Dynamic Dash Attack Check ---
+            let dashChance = GAME_CONFIG.DASH_BASE_CHANCE + 
+                             (activeEnemiesCount * GAME_CONFIG.DASH_PER_ENEMY_SCALING);
+                             
+            dashChance = Math.min(GAME_CONFIG.DASH_MAX_CHANCE, dashChance); 
+
+            if (!isDashWarningActive && Math.random() < dashChance) {
+                triggerDashEvent();
+                return; 
+            }
+            
+            // --- 2. General Chaos Event Check (If dash didn't trigger) ---
+            if (Math.random() < GAME_CONFIG.RANDOM_EVENT_CHANCE) {
+                
+                let availableEvents = [
+                    triggerControlJolt, 
+                    triggerColorConfusion, 
+                    triggerIcePhysics, 
+                    triggerShrekEvent,
+                    triggerStinkyRepel
+                ];
+                
+                if (score >= GAME_CONFIG.INVISIBLE_THRESHOLD) { availableEvents.push(triggerInvisibility); }
+                
+                // Filter out events that are already active
+                availableEvents = availableEvents.filter(e => {
+                    if (e === triggerColorConfusion && isColorConfused) return false;
+                    if (e === triggerIcePhysics && isIcePhysic) return false;
+                    if (e === triggerInvisibility && isInvisible) return false;
+                    if (e === triggerStinkyRepel && isStinkyRepel) return false; 
+                    return true;
+                });
+
+                if (availableEvents.length > 0) {
+                    const selectedEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+                    selectedEvent();
+                }
+            }
+        }
+
+
+        function updateChaosVisuals() {
+            const chaosFactor = Math.min(1, score / 50); 
+            
+            const newSaturation = Math.round(40 + (95 - 40) * chaosFactor);
+            const newLightness = Math.round(50 + 10 * chaosFactor); 
+            const newSpeed = Math.max(5, 20 - 15 * chaosFactor); 
+
+            root.style.setProperty('--chaos-saturation', `${newSaturation}%`);
+            root.style.setProperty('--chaos-lightness', `${newLightness}%`);
+            root.style.setProperty('--chaos-speed', `${newSpeed}s`);
+        }
+
+
+        // --- GAME FLOW FUNCTIONS ---
+
+        function initGame() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = GAME_CONFIG.CANVAS_HEIGHT;
+            
+            // Reset flags
+            isColorConfused = false;
+            isIcePhysic = false;
+            isInvisible = false;
+            isStinkyRepel = false; 
+            isDashWarningActive = false; 
+            currentDamping = GAME_CONFIG.DAMPING_DEFAULT;
+            root.style.setProperty('--player-damping-mult', 1);
+            cleanupShrekPopups(); 
+
+            currentMappingIndex = 0;
+            currentStupidKeys = STUPID_SETS_INFO[0].map;
+            updateControlDisplay(STUPID_SETS_INFO[0].name);
+
+            player = {
+                x: canvas.width / 2 - GAME_CONFIG.PLAYER_SIZE / 2,
+                y: canvas.height / 2 - GAME_CONFIG.PLAYER_SIZE / 2,
+                vx: 0, 
+                vy: 0, 
+                size: GAME_CONFIG.PLAYER_SIZE,
+                color: '#3b82f6' 
+            };
+            targets = [];
+            enemies = [];
+            score = 0;
+            frameCount = 0;
+            isGameOver = false;
+            keysPressed = {};
+            
+            maxEnemies = 5;
+            
+            scoreValueEl.textContent = score;
+            messageBox.style.display = 'none';
+            eventMessage.classList.remove('visible');
+            
+            updateChaosVisuals();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const jitterX = (Math.random() - 0.5) * GAME_CONFIG.JITTER_MAGNITUDE;
+            const jitterY = (Math.random() - 0.5) * GAME_CONFIG.JITTER_MAGNITUDE;
+            
+            const targetColor = isColorConfused ? '#ef4444' : '#10b981'; 
+            const enemyColor = isColorConfused ? '#10b981' : '#ef4444'; 
+            const targetStroke = isColorConfused ? '#991b1b' : '#065f46';
+            const enemyStroke = isColorConfused ? '#065f46' : '#991b1b';
+            
+            const playerCenterX = player.x + player.size / 2;
+            const playerCenterY = player.y + player.size / 2;
+
+
+            // --- Draw Player Aura (STINKY REPELS) ---
+            if (isStinkyRepel) {
+                ctx.globalAlpha = 0.3 + (Math.sin(frameCount * 0.1) + 1) * 0.1; 
+                ctx.fillStyle = '#10b981'; 
+                ctx.beginPath();
+                ctx.arc(playerCenterX + jitterX, playerCenterY + jitterY, player.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw Player
+            ctx.globalAlpha = 1.0;
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x + jitterX, player.y + jitterY, player.size, player.size);
+            
+            ctx.globalAlpha = isInvisible ? GAME_CONFIG.INVISIBLE_ALPHA : 1.0;
+
+
+            // Draw Targets
+            ctx.fillStyle = targetColor;
+            targets.forEach(t => {
+                ctx.fillRect(t.x, t.y, t.size, t.size);
+                ctx.strokeStyle = targetStroke; 
+                ctx.lineWidth = isColorConfused ? 3 : 1; 
+                ctx.strokeRect(t.x, t.y, t.size, t.size);
+                ctx.lineWidth = 1; 
+            });
+
+            // Draw Enemies & Warnings
+            enemies.forEach(e => {
+                const baseColor = enemyColor;
+                const r = parseInt(baseColor.slice(1, 3), 16);
+                const g = parseInt(baseColor.slice(3, 5), 16);
+                const b = parseInt(baseColor.slice(5, 7), 16);
+                
+                let lineAlpha = isInvisible ? GAME_CONFIG.INVISIBLE_ALPHA : 0.5 + Math.sin(frameCount * 0.1) * 0.4; 
+
+                // --- 1. DASH WARNING PHASE ---
+                if (e.isDashWarning) {
+                    ctx.save();
+                    ctx.strokeStyle = `rgba(239, 68, 68, ${lineAlpha})`; 
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]); 
+                    ctx.beginPath();
+                    ctx.moveTo(e.x + e.size / 2, e.y + e.size / 2); 
+                    const lineEndX = e.x + e.size/2 + e.dashPath.dx * (canvas.width + canvas.height);
+                    const lineEndY = e.y + e.size/2 + e.dashPath.dy * (canvas.width + canvas.height);
+                    ctx.lineTo(lineEndX, lineEndY); 
+                    ctx.stroke();
+                    ctx.restore();
+                    
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${isInvisible ? GAME_CONFIG.INVISIBLE_ALPHA : 0.2})`;
+                    ctx.fillRect(e.x, e.y, e.size, e.size);
+                    
+                } 
+                // --- 2. STANDARD WARNING PHASE & 3. DASHING PHASE & 4. ACTIVE ENEMY DRAWING ---
+                else {
+                    let fillStyle = enemyColor;
+                    if (e.isWarning) {
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${isInvisible ? GAME_CONFIG.INVISIBLE_ALPHA : 0.2})`;
+                        ctx.fillRect(e.x, e.y, e.size, e.size);
+                    } else if (e.isDashing) {
+                        ctx.fillStyle = enemyColor; 
+                        ctx.shadowColor = enemyColor;
+                        ctx.shadowBlur = 10;
+                    }
+                    
+                    if (!e.isWarning) {
+                        ctx.fillStyle = fillStyle;
+                        ctx.fillRect(e.x, e.y, e.size, e.size);
+                    }
+
+                    ctx.shadowBlur = 0; 
+                    
+                    if (!e.isDashing) {
+                        ctx.strokeStyle = enemyStroke; 
+                        ctx.lineWidth = e.isWarning ? 3 : 2;
+                        ctx.beginPath();
+                        ctx.moveTo(e.x, e.y);
+                        ctx.lineTo(e.x + e.size, e.y + e.size);
+                        ctx.moveTo(e.x + e.size, e.y);
+                        ctx.lineTo(e.x, e.y + e.size);
+                        ctx.stroke();
+                        ctx.lineWidth = 1;
+                    }
+                }
+                
+                // --- STINKY TEXT DRAWING ---
+                if (isStinkyRepel && !e.isWarning && !e.isDashWarning) {
+                    ctx.globalAlpha = 0.8;
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.font = "12px 'Bungee Outline', sans-serif";
+                    ctx.textAlign = 'center';
+                    ctx.fillText("STINKY!", e.x + e.size / 2, e.y - 5);
+                }
+            });
+            
+            ctx.globalAlpha = 1.0;
+
+            if (isGameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            updateChaosVisuals();
+
+            const dampingFactor = currentDamping;
+            const bounceFactor = GAME_CONFIG.PLAYER_WALL_BOUNCE; 
+
+            let forceX = 0;
+            let forceY = 0;
+
+            const STUPID_KEYS_MAP = currentStupidKeys;
+
+            for (const key in keysPressed) {
+                if (keysPressed[key]) {
+                    const normalizedKey = key.toUpperCase();
+                    
+                    let mappedAction = null;
+                    
+                    if (VALID_STUPID_KEYS.has(normalizedKey)) {
+                        mappedAction = STUPID_KEYS_MAP[normalizedKey];
+                    } 
+                    else if (VALID_SMART_KEYS.has(normalizedKey)) {
+                        mappedAction = SMART_CONTROLS[normalizedKey];
+                    }
+
+                    if (mappedAction) {
+                        forceX += mappedAction.dx * GAME_CONFIG.ACCEL_RATE;
+                        forceY += mappedAction.dy * GAME_CONFIG.ACCEL_RATE;
+                    }
+                }
+            }
+
+            player.vx += forceX;
+            player.vy += forceY;
+
+            player.vx *= dampingFactor;
+            player.vy *= dampingFactor;
+
+            const speed = Math.hypot(player.vx, player.vy);
+            if (speed > GAME_CONFIG.PLAYER_MAX_SPEED) {
+                player.vx = (player.vx / speed) * GAME_CONFIG.PLAYER_MAX_SPEED;
+                player.vy = (player.vy / speed) * GAME_CONFIG.PLAYER_MAX_SPEED;
+            }
+
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // --- Wall collision & Bounce Physics ---
+            if (player.x < 0) {
+                player.x = 0;
+                player.vx *= -bounceFactor; 
+            } else if (player.x + player.size > canvas.width) {
+                player.x = canvas.width - player.size;
+                player.vx *= -bounceFactor; 
+            }
+
+            if (player.y < 0) {
+                player.y = 0;
+                player.vy *= -bounceFactor; 
+            } else if (player.y + player.size > canvas.height) {
+                player.y = canvas.height - player.size;
+                player.vy *= -bounceFactor; 
+            }
+            
+            const playerCenterX = player.x + player.size / 2;
+            const playerCenterY = player.y + player.size / 2;
+
+
+            // --- Spawn Logic ---
+            const activeEnemiesCount = enemies.filter(e => !e.isWarning && !e.isDashWarning && !e.isDashing).length;
+
+            const currentEnemySpawnRate = Math.max(50, GAME_CONFIG.ENEMY_SPAWN_RATE - Math.floor(score / 5) * 10);
+            
+            if (!isDashWarningActive && !isInvisible && activeEnemiesCount < maxEnemies && frameCount % currentEnemySpawnRate === 0) {
+                let safeX, safeY;
+                let attempts = 0;
+                const minDistance = GAME_CONFIG.PLAYER_SIZE * 3.5; 
+                
+                do {
+                    safeX = Math.random() * (canvas.width - GAME_CONFIG.ENEMY_SIZE);
+                    safeY = Math.random() * (canvas.height - GAME_CONFIG.ENEMY_SIZE);
+                    attempts++;
+                } while (attempts < 100 && 
+                         Math.hypot(safeX + GAME_CONFIG.ENEMY_SIZE/2 - playerCenterX, safeY + GAME_CONFIG.ENEMY_SIZE/2 - playerCenterY) < minDistance);
+
+                const newWarning = {
+                    x: safeX,
+                    y: safeY,
+                    size: GAME_CONFIG.ENEMY_SIZE,
+                    isWarning: true,
+                    spawnFrame: frameCount,
+                };
+                enemies.push(newWarning);
+            }
+
+            // --- Update Enemies and Handle Dash Transitions ---
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+
+                // 1. DASH WARNING PHASE 
+                if (e.isDashWarning) {
+                    if (frameCount - e.dashFrameStart >= GAME_CONFIG.DASH_WARNING_FRAMES) {
+                        e.isDashWarning = false;
+                        e.isDashing = true;
+                    }
+                    continue; 
+                }
+                
+                // 2. DASHING PHASE
+                if (e.isDashing) {
+                    e.x += e.dashPath.dx * GAME_CONFIG.DASH_SPEED;
+                    e.y += e.dashPath.dy * GAME_CONFIG.DASH_SPEED;
+                    
+                    const isOffScreen = e.x + e.size < 0 || e.x > canvas.width ||
+                                        e.y + e.size < 0 || e.y > canvas.height;
+                                        
+                    if (isOffScreen) {
+                        enemies.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (checkCollision(player, e)) {
+                        endGame(false);
+                        return;
+                    }
+                    continue; 
+                }
+                
+                // 3. STANDARD WARNING PHASE
+                if (e.isWarning) {
+                    if (frameCount - e.spawnFrame >= GAME_CONFIG.ENEMY_WARNING_FRAMES) {
+                        e.isWarning = false;
+                        e.vx = getRandomRange(-1.5, 1.5);
+                        e.vy = getRandomRange(-1.5, 1.5);
+                    }
+                    continue; 
+                }
+
+                // 4. ACTIVE ENEMY MOVEMENT & STINKY REPULSION
+                
+                if (isStinkyRepel) {
+                    const eCenterX = e.x + e.size / 2;
+                    const eCenterY = e.y + e.size / 2;
+                    
+                    let dx = eCenterX - playerCenterX;
+                    let dy = eCenterY - playerCenterY;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist > 0) {
+                        e.vx += (dx / dist) * GAME_CONFIG.STINKY_REPULSION_FORCE;
+                        e.vy += (dy / dist) * GAME_CONFIG.STINKY_REPULSION_FORCE;
+                    }
+                    
+                    const runSpeed = Math.hypot(e.vx, e.vy);
+                    const MAX_RUN_SPEED = 6; 
+                    if (runSpeed > MAX_RUN_SPEED) {
+                        e.vx = (e.vx / runSpeed) * MAX_RUN_SPEED;
+                        e.vy = (e.vy / runSpeed) * MAX_RUN_SPEED;
+                    }
+                    
+                    e.vx *= 0.95;
+                    e.vy *= 0.95;
+
+                } else {
+                    e.vx *= 0.98;
+                    e.vy *= 0.98;
+                    
+                    e.vx += getRandomRange(-0.1, 0.1);
+                    e.vy += getRandomRange(-0.1, 0.1);
+                    
+                    const currentSpeed = Math.hypot(e.vx, e.vy);
+                    const MAX_STANDARD_SPEED = 2;
+                    if (currentSpeed > MAX_STANDARD_SPEED) {
+                        e.vx = (e.vx / currentSpeed) * MAX_STANDARD_SPEED;
+                        e.vy = (e.vy / currentSpeed) * MAX_STANDARD_SPEED;
+                    }
+                }
+                
+
+                e.x += e.vx;
+                e.y += e.vy;
+
+                // Wall collision handling for enemies
+                if (e.x < 0) {
+                    e.x = 0;
+                    e.vx = Math.abs(e.vx);
+                } else if (e.x + e.size > canvas.width) {
+                    e.x = canvas.width - e.size;
+                    e.vx = -Math.abs(e.vx);
+                }
+                if (e.y < 0) {
+                    e.y = 0;
+                    e.vy = Math.abs(e.vy);
+                } else if (e.y + e.size > canvas.height) {
+                    e.y = canvas.height - e.size;
+                    e.vy = -Math.abs(e.vy);
+                }
+                
+                if (checkCollision(player, e)) {
+                    endGame(false);
+                    return; 
+                }
+            }
+            
+            if (isDashWarningActive && !enemies.some(e => e.isDashWarning || e.isDashing)) {
+                 isDashWarningActive = false;
+            }
+
+
+            // --- Collision Detection with Targets ---
+            for (let i = targets.length - 1; i >= 0; i--) {
+                if (checkCollision(player, targets[i])) {
+                    score++;
+                    scoreValueEl.textContent = score;
+                    targets.splice(i, 1); 
+
+                    if ((score % 10 === 0 || score % 15 === 0) && score > 0) {
+                        triggerStupidFlip();
+                    }
+
+                    triggerRandomEvent();
+                }
+            }
+            
+            // --- Target Spawning ---
+            if (!isInvisible && frameCount % GAME_CONFIG.TARGET_SPAWN_RATE === 0) {
+                const newTarget = {
+                    x: Math.random() * (canvas.width - GAME_CONFIG.TARGET_SIZE),
+                    y: Math.random() * (canvas.height - GAME_CONFIG.TARGET_SIZE),
+                    size: GAME_CONFIG.TARGET_SIZE,
+                };
+                targets.push(newTarget);
+            }
+
+            if (targets.length > 50) targets.shift();
+            if (enemies.length > maxEnemies + 10) enemies.shift(); 
+
+
+            frameCount++;
+        }
+
+        function endGame(isWin) {
+            isGameOver = true;
+            finalScoreEl.textContent = score;
+            messageTitle.textContent = "Your Brain is Defeated!";
+            messageText.innerHTML = `You tried to control the nonsensical square and scored <b>${score}</b> points. Can you handle more random stupidity?`;
+            startButton.textContent = "Try Again";
+            messageBox.style.display = 'flex';
+            
+            // --- High Score Check ---
+            if (score > currentHighScore) {
+                // Save the new high score
+                saveHighScore(score, currentUserId);
+                messageText.innerHTML += `<br><span class="text-red-500 font-bold">NEW GLOBAL HIGH SCORE!</span>`;
+            }
+            
+            // Reset states
+            cleanupShrekPopups(); 
+            isColorConfused = false;
+            isIcePhysic = false;
+            isInvisible = false;
+            isStinkyRepel = false; 
+            isDashWarningActive = false; 
+            currentDamping = GAME_CONFIG.DAMPING_DEFAULT;
+            root.style.setProperty('--player-damping-mult', 1);
+
+            // Reset chaos visuals
+            root.style.setProperty('--chaos-saturation', `40%`);
+            root.style.setProperty('--chaos-lightness', `50%`);
+            root.style.setProperty('--chaos-speed', `20s`);
+        }
+
+        // Main game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Event Listeners ---
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toUpperCase();
+            if (ALL_VALID_KEYS.has(key) && !isGameOver) { 
+                keysPressed[key] = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toUpperCase();
+            if (ALL_VALID_KEYS.has(key) && !isGameOver) { 
+                keysPressed[key] = false;
+            }
+        });
+
+        startButton.addEventListener('click', initGame);
+
+        window.addEventListener('resize', () => {
+            if (!isGameOver) {
+                 canvas.width = canvas.offsetWidth;
+                 player.x = Math.min(player.x, canvas.width - player.size);
+            }
+        });
+
+        // Initial setup and show start screen
+        window.onload = async function() {
+            await setupFirebase();
+
+            canvas.width = canvas.offsetWidth;
+            draw();
+            
+            messageTitle.textContent = "Welcome to Maximum Misalignment!";
+            messageText.innerHTML = `Avoid the red boxes and collect the green ones. After score ${GAME_CONFIG.INVISIBLE_THRESHOLD}, look out for the **Invisibility** chaos event! <br><br> (High Score is collaborative!)`;
+            startButton.textContent = "Start Game";
+            messageBox.style.display = 'flex';
+
+            requestAnimationFrame(gameLoop);
+            
+            updateControlDisplay(STUPID_SETS_INFO[0].name);
+        };
+
+    </script>
+</body>
+</html>
