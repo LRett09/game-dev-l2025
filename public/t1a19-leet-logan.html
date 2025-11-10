@@ -1,0 +1,57 @@
+<h1 align=center> t1a19-leet-logan</h1>
+
+<ol>
+<br><br><li> Prompt: Make me a begginer javascript leet code question
+
+<br><br><li> Write a function countVowels(str) that takes a string and returns the number of vowels in it. Vowels are: a, e, i, o, u (both uppercase and lowercase should be counted).
+
+<pre>
+<span id="mySpan01">
+Number of vowels
+</span>
+<input type="text" id="myText01"> </input>
+<input type="button" value="myButt01" onclick="countVowels()"></input> 
+
+<script> 
+ 
+ 
+function countVowels() {
+	let vowels = "aeiouAEIOU" 
+	let myString = document.getElementById('myText01').value
+	let myCount = 0
+
+if (myString == vowels) {
+myCount = myCount + 1 }
+
+document.getElementById('mySpan01').innerHTML = myCount
+}
+
+</script>
+</pre>
+
+<br><br><li>ChatGPT's code 
+<span id="mySpan02">
+</span>
+
+<span id="mySpan02"></span>
+<input type="text" id="myText01">
+<input type="button" value="myButt01" onclick="countVowels()">
+
+<script>
+function countVowels() {
+    let vowels = "aeiouAEIOU";
+    let myString = document.getElementById('myText01').value;
+    let myCount = 0;
+
+    for (let i = 0; i < myString.length; i++) {
+        if (vowels.includes(myString[i])) {
+            myCount++;
+        }
+    }
+
+    document.getElementById('mySpan02').innerHTML = myCount;
+}
+</script>
+
+
+</ol>
