@@ -1,0 +1,50 @@
+<h1 align=center>t2a20-manipulation.html</h1>
+
+String, Array, and Object Manipulation methods<br>
+
+<input id="myNum01" type=text value="This is a string" > <br>
+<span id="mySpan01">...</span><br>
+
+<input type=button value=".toUpperCase()" onclick="{
+	let myIn = document.getElementById('myNum01').value
+	document.getElementById('mySpan01').innerHTML = myIn.toUpperCase()
+}"><br>
+
+<input type=button value=".split() makes and array" onclick="{
+	let myIn = document.getElementById('myNum01').value
+	document.getElementById('mySpan01').innerHTML = myIn.split('')
+}"><br>
+
+<input type=button value="Object.keys() returns array" onclick="{
+	let myObject = {
+		alive: 'yes',
+		vitals: 'stable',
+		bpm: 75
+	}
+	let keyArray = Object.keys(myObject)
+	document.getElementById('mySpan01').innerHTML = keyArray
+}"><br>
+
+<input type=button value=".toLowerCase()" onclick="{
+	let myIn = document.getElementById('myNum01').value
+	document.getElementById('mySpan01').innerHTML = myIn.toLowerCase()
+}"><br>
+
+<input type=button value=".map() uses .split() to let it work" onclick="{
+	let myString = document.getElementById('myNum01').value
+	let myArray = myString.split('')
+	let transformedArray = myArray.map(char => char + 'AA')
+	document.getElementById('mySpan01').innerHTML = transformedArray.join(' ')
+}"><br>
+	
+<input type=button value=".endsWith()" onclick="{
+	
+}"><br>
+
+<input type=button value=".join()" onclick="{
+
+}"><br>
+
+<input type=button value=".push()" onclick="{
+
+}"><br>
