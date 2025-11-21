@@ -38,13 +38,21 @@ String, Array, and Object Manipulation methods<br>
 }"><br>
 	
 <input type=button value=".endsWith()" onclick="{
-	
+let myIn = document.getElementById('myNum01').value
+	let doesEnd = myIn.endsWith('ing')
+	document.getElementById('mySpan01').innerHTML = doesEnd
 }"><br>
 
 <input type=button value=".join()" onclick="{
-
+let myString = document.getElementById('myNum01').value
+	let myArray = myString.split('')
+	let joined = myArray.join('-')
+	document.getElementById('mySpan01').innerHTML = joined
 }"><br>
 
 <input type=button value=".push()" onclick="{
-
+let myString = document.getElementById('myNum01').value
+	let myArray = myString.split('')
+	myArray.push('NEW')
+	document.getElementById('mySpan01').innerHTML = myArray
 }"><br>
