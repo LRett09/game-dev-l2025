@@ -24,6 +24,37 @@ async function fetchData(url) {
         document.getElementById('myDiv2').innerHTML += 
             `<p>${data.joke}</p>`;
     }
+	if (data.image) {
+    myDiv2.innerHTML += `<img src="${data.image}">`;
+}
+
+if (data.message && data.status === "success") {
+    myDiv2.innerHTML += `<img src="${data.message}">`; // dog API
+}
+
+if (Array.isArray(data) && data[0].url) {
+    myDiv2.innerHTML += `<img src="${data[0].url}">`; // cat API
+}
+
+if (data.slip) {
+    myDiv2.innerHTML += `<p>${data.slip.advice}</p>`;
+}
+
+if (data.text) {
+    myDiv2.innerHTML += `<p>${data.text}</p>`; // useless fact API
+}
+
+if (data.content) {
+    myDiv2.innerHTML += `<p>${data.content}</p>`; // quote API
+}
+
+if (data.activity) {
+    myDiv2.innerHTML += `<p>${data.activity}</p>`;
+}
+
+if (data.quote) {
+    myDiv2.innerHTML += `<p>${data.quote}</p>`;
+}
 }
 </script>
 
@@ -31,6 +62,13 @@ async function fetchData(url) {
 		<select id="mySelect" size="1" onchange="fetchData(this.value)">
 			<option value="https://icanhazdadjoke.com/">baddadjoke</option>
 			<option value="https://randomfox.ca/floof/">randomfox</option>
+			<option value="https://dog.ceo/api/breeds/image/random">randomdog</option>
+			<option value="https://api.thecatapi.com/v1/images/search">randomcat</option>
+			<option value="https://api.adviceslip.com/advice">advice</option>
+			<option value="https://uselessfacts.jsph.pl/api/v2/facts/random">uselessfact</option>
+			<option value="https://api.quotable.io/random">quote</option>
+			<option value="https://www.boredapi.com/api/activity/">boredactivity</option>
+			<option value="https://animechan.xyz/api/random">animequote</option>
 		</select><br><br>
 		
 		<div id="myDiv1">...</div>
