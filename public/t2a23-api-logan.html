@@ -1,0 +1,85 @@
+<<h1 align=center>t2a22-json</h1>
+
+<script>
+async function fetchData(url) {
+    try {
+        let response;
+
+        // Dad joke needs special headers
+        if (url === "https://icanhazdadjoke.com/") {
+            response = await fetch(url, {
+                headers: { "Accept": "application/json" }
+            });
+        } else {
+            response = await fetch(url);
+        }
+
+        const data = await response.json();
+
+        const myDiv1 = document.getElementById('myDiv1');
+        const myDiv2 = document.getElementById('myDiv2');
+
+        myDiv1.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        myDiv2.innerHTML = "";
+
+        // dad joke
+        if (data.joke && url === "https://icanhazdadjoke.com/") {
+            myDiv2.innerHTML += `<p>${data.joke}</p>`;
+        }
+
+        // fox
+        if (data.image) {
+            myDiv2.innerHTML += `<img src="${data.image}" style="max-width:100%">`;
+        }
+
+        // dog/cat array images
+        if (Array.isArray(data) && data[0]?.url) {
+            myDiv2.innerHTML += `<img src="${data[0].url}" style="max-width:100%">`;
+        }
+
+        // useless fact
+        if (data.data) {
+            myDiv2.innerHTML += `<p>${data.data}</p>`;
+        }
+
+        // advice
+        if (data.slip?.advice) {
+            myDiv2.innerHTML += `<p>${data.slip.advice}</p>`;
+        }
+
+        // Official Joke API
+        if (data.setup && data.punchline) {
+            myDiv2.innerHTML += `<p>${data.setup}<br><b>${data.punchline}</b></p>`;
+        }
+
+        // JokeAPI.dev (Programming joke)
+        if (data.joke && url.includes("jokeapi")) {
+            myDiv2.innerHTML += `<p>${data.joke}</p>`;
+        }
+
+    } catch (err) {
+        document.getElementById('myDiv1').innerHTML = "Error fetching data";
+        document.getElementById('myDiv2').innerHTML = "";
+    }
+}
+</script>
+
+
+
+
+
+<select id="mySelect" onchange="fetchData(this.value)">
+    <option value="https://icanhazdadjoke.com/">dad joke</option>
+    <option value="https://randomfox.ca/floof/">random fox</option>
+    <option value="https://api.thedogapi.com/v1/images/search">random dog</option>
+    <option value="https://api.thecatapi.com/v1/images/search">random cat</option>
+    <option value="https://uselessfacts.jsph.pl/api/v2/facts/random">useless fact</option>
+    <option value="https://api.adviceslip.com/advice">advice</option>
+    <option value="https://official-joke-api.appspot.com/random_joke">random joke</option>
+    <option value="https://v2.jokeapi.dev/joke/Programming?type=single">programmer joke</option>
+</select>
+
+
+<br><br>
+<div id="myDiv1">...</div>
+<div id="myDiv2">...</div>
