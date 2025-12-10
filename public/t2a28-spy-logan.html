@@ -52,9 +52,9 @@
 
 <textarea id="myArea03" rows=4 cols=70></textarea><br> 
 
-<input type=button value="encrypt" onclick="{
+<input type=button value="encrypt2" onclick="{
    let myTemp = ''
-   myString = document.getElementById('myArea01').value.toLowerCase().split('')
+   myString = document.getElementById('myArea04').value.toLowerCase().split('')
    for (let myLoop=0;   myLoop < myString.length; myLoop++){
       myTemp = myString[myLoop]
       if (myString[myLoop] == 'a') {myTemp  = 'z'} 
@@ -87,16 +87,16 @@
      
       myString[myLoop] = myTemp
    }
-   document.getElementById('myArea02').value = myString.join('')
+   document.getElementById('myArea05').value = myString.join('')
 }"><br><br>
 
 
 
-<textarea id="myArea02" rows=4 cols=70></textarea><br> 
+<textarea id="myArea05" rows=4 cols=70></textarea><br> 
 
-<input type=button value="decrypt" onclick="{
+<input type=button value="decrypt2" onclick="{
    alert('Sorry, you have to do this!')
 }"><br><br>
 
 
-<textarea id="myArea03" rows=4 cols=70></textarea><br> 
+<textarea id="myArea06" rows=4 cols=70></textarea><br> 
