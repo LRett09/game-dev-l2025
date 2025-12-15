@@ -5,17 +5,26 @@
 
 <img id="myImg01" style="position:absolute; width:100px; height:80px; top:0px; left:50px;" src="img01.gif">
 <img id="myImg02" style="position:absolute; width:100px; height:80px; top:0px; left:250px;" src="img02.gif">
+<img id="attackBox" style="position:absolute; width:40px; height:40px; background:red; opacity:0.5; display:none;">
 
 <script>
 
 // ===== GLOBAL VARIABLES =====
 let enemyX = 250
+let enemyY = 0
 let enemySpeed = 10
+let myEnemyHp = 0
 let myClock
 
 let moveAmount = 10
 let x = 50
 let y = 0
+
+let isAttacking = false
+let attackDuration = 200
+
+let myImg01
+let myImg02
 
 window.onload = function () {
 
@@ -27,17 +36,22 @@ window.onload = function () {
         if (e.key === "s") y += moveAmount
         if (e.key === "a") x -= moveAmount
         if (e.key === "d") x += moveAmount
+		
+		if (e.key === " ") {
+        attack()
+		}
 
         myImg01.style.left = x + "px"
         myImg01.style.top  = y + "px"
 
         myCheckHit()
     })
+	
 
     myClock = setInterval(myEnemy, 600)
 }
 
-// ===== COLLISION =====
+// Collision
 function myHitOther(my1,my2){
     let a = document.getElementById(my1)
     let b = document.getElementById(my2)
@@ -62,7 +76,7 @@ function myCheckHit(){
     }
 }
 
-// ===== ENEMY AI =====
+// Enemy AI
 function myEnemy() {
     let direction = Math.random() < 0.5 ? -1 : 1
     enemyX += direction * enemySpeed
@@ -70,10 +84,46 @@ function myEnemy() {
     if (enemyX < 0) enemyX = 0
     if (enemyX > window.innerWidth - 100)
         enemyX = window.innerWidth - 100
-
-    myImg02.style.left = enemyX + "px"
+		
+    document.getElementById('myImg02').style.left = enemyX + "px"
 }
+
+// Attacking
+function attack() {
+    if (isAttacking) return
+    isAttacking = true
+
+    let attackBox = document.getElementById("attackBox")
+
+    // Position attack in front of player (right side)
+    attackBox.style.left = (x + 80) + "px"
+    attackBox.style.top  = (y + 20) + "px"
+
+    attackBox.style.display = "block"
+
+    // Check hit immediately
+    if (myHitOther('attackBox', 'myImg02')) {
+        enemyHit()
+    }
+
+    // Remove attack after short time
+    setTimeout(() => {
+        attackBox.style.display = "none"
+        isAttacking = false
+    }, attackDuration)
+}
+
+// When Enemy is hit
+function enemyHit() {
+	if (myEnemyHp >= 5) {
+	document.getElementById('myImg02').style.display = "none"
+	} else {
+	console.log ("enemy defeated!")
+	myEnemyHp ++
+	}
+	}
 
 </script>
 
 </body>
+
