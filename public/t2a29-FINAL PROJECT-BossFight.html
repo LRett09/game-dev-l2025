@@ -4,13 +4,14 @@
 <h1 align=center>t2a25-game-template-fred.html</h1>
 
 <img id="myImg01" style="position:absolute; width:100px; height:80px; top:0px; left:50px;" src="img01.gif">
-<img id="myImg02" style="position:absolute; width:100px; height:80px; top:0px; left:250px;" src="img02.gif">
-<img id="attackBox" style="position:absolute; width:60px; height:80px; top:0px; left:50px;" src="BaseballBat.png">
+<img id="myImg02" style="position:absolute; width:100px; height:80px; top:400px; left:950px;" src="Training dummy.png">
+<img id="rift" style="position:absolute; width:80px; height:80px; top:400px; left:1200px;" src="Rift.gif">
+<img id="attackBox" style="position:absolute; width:40px; height:40px; background:red; opacity:0.5; display:none;">
 
 <script>
 
 // ===== GLOBAL VARIABLES =====
-let enemyX = 250
+let enemyX = 950
 let enemyY = 0
 let enemySpeed = 10
 let myEnemyHp = 0
@@ -25,6 +26,7 @@ let attackDuration = 200
 
 let myImg01
 let myImg02
+let myPortal
 
 window.onload = function () {
 
@@ -97,7 +99,7 @@ function attack() {
 
     // Position attack in front of player (right side)
     attackBox.style.left = (x + 80) + "px"
-    attackBox.style.top  = (y + 20) + "px"
+    attackBox.style.top  = (y + 30) + "px"
 
     attackBox.style.display = "block"
 
@@ -120,6 +122,14 @@ function enemyHit() {
 	} else {
 	console.log ("enemy defeated!")
 	myEnemyHp ++
+	}
+	}
+	
+// To go to the next stage
+function teleport() {
+	if (myHitOther('myImg01', 'myPortal')) {
+	document.getElementById('myImg01').position.left = '0px'
+	location = "t2a29-second-level.html"
 	}
 	}
 
