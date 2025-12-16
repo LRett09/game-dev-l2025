@@ -30,8 +30,9 @@ let myPortal
 
 window.onload = function () {
 
-		const myImg01 = document.getElementById("myImg01")
-		const myImg02 = document.getElementById("myImg02")
+		myImg01 = document.getElementById("myImg01")
+		myImg02 = document.getElementById("myImg02")
+		myPortal = document.getElementById("rift")
 
     document.addEventListener("keydown", function(e) {
         if (e.key === "w") y -= moveAmount
@@ -47,6 +48,7 @@ window.onload = function () {
         myImg01.style.top  = y + "px"
 
         myCheckHit()
+		teleport()
     })
 	
 
@@ -127,12 +129,13 @@ function enemyHit() {
 	
 // To go to the next stage
 function teleport() {
-	if (myHitOther('myImg01', 'myPortal')) {
-	document.getElementById('myImg01').position.left = '0px'
-	location = "t2a29-second-level.html"
-	console.log ("teleport!")
-	}
-	}
+    if (myHitOther('myImg01', 'rift')) {
+        myImg01.style.left = '0px'
+        myImg01.style.top  = '0px'
+        console.log("rift entered")
+        // location = "t2a29-second-level.html"
+    }
+}
 
 </script>
 
