@@ -1,0 +1,12 @@
+<h1>Loading...</h1>
+<div id="tip">Tip: Rock and Stone.</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const nextLevel = params.get("next");
+
+  // fake delay OR real preload
+  setTimeout(() => {
+    window.location.href = nextLevel;
+  }, 2000);
+</script>
