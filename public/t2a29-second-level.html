@@ -7,6 +7,8 @@
 <img id="myImg02" style="position:absolute; width:280px; height:200px; top:400px; left:950px;" src="BossOne.gif">
 <img id="attackBox" style="position:absolute; width:40px; height:40px; background:red; opacity:0.5; display:none;">
 
+<img id="myAtk01" style="position:absolute; width:10px; height:10px; top:400px; left:950px; display:hidden" src="BossAttack01.png">
+
 <script>
 
 //Global Variables
@@ -26,7 +28,8 @@
   window.onload = function () {
 
 		myImg01 = document.getElementById("myImg01") 
-			
+
+	  //Movement
 	  	document.addEventListener("keydown", function(e) {
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
@@ -68,9 +71,16 @@ function myCheckHit(){
     }
 }
 
+//The bosses attacks
 function BossAttack (){
 	while (bossFight = true) {
-		document.getElementById('myImg02') = math.random 
+		let attackNumber = math.random() < 0.20 ? 1 : 2 : 3 : 4 : 5
+		BossAttack += attackNumber
+
+		if (attackNumber == 1) {
+			document.getElementById('myAtk01').style.display = show 
+			document.getElementById('myAtk01').style.position = 
+			
 	}
 }
 
