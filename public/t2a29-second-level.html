@@ -67,8 +67,13 @@
 }
 
 function myCheckHit(){
-    if ( myHitOther('myImg01','myImg02') ){
-        myImg01.style.top = "50px"
+    if (myHitOther('myImg01','myImg02')){
+
+        let playerX = parseInt(myImg01.style.left)
+        let attackX = parseInt(attackBox.style.left)
+
+        myImg01.style.left = (playerX - 80) + "px"
+        attackBox.style.left = (attackX - 80) + "px"
     }
 }
 
