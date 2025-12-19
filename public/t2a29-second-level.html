@@ -24,6 +24,7 @@
   let attackBox
 
   let bossFight = true
+  let myEnemyHp = 0
 
   window.onload = function () {
 
@@ -87,6 +88,41 @@ function BossAttack (){
 			
 	}
 }
+
+// Attacking
+function attack() {
+    if (isAttacking) return
+    isAttacking = true
+
+    let attackBox = document.getElementById("attackBox")
+
+    // Position attack in front of player (right side)
+    attackBox.style.left = (x + 80) + "px"
+    attackBox.style.top  = (y + 30) + "px"
+
+    attackBox.style.display = "block"
+
+    // Check hit immediately
+    if (myHitOther('attackBox', 'myImg02')) {
+        enemyHit()
+    }
+
+    // Remove attack after short time
+    setTimeout(() => {
+        attackBox.style.display = "none"
+        isAttacking = false
+    }, attackDuration)
+}
+
+// When Enemy is hit
+function enemyHit() {
+	if (myEnemyHp >= 10) {
+	document.getElementById('myImg02').style.display = "none"
+	} else {
+	console.log ("enemy defeated!")
+	myEnemyHp ++
+	}
+	}
 
 
   }
