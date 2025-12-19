@@ -73,20 +73,23 @@ function myCheckHit(){
 }
 
 //The bosses attacks
-function BossAttack (){
-	while (bossFight === true) {
-		let attackNumber = Math.random() < 0.20 ? 1 : 2 : 3 : 4 : 5
-		BossAttack += attackNumber
+function BossAttack() {
+    if (!bossFight) return
+	
 
-		if (attackNumber == 1) {
-			document.getElementById('myAtk01').style.display = show 
-			for (10000)
-			document.getElementById('myAtk01').style.left += "10px"
-		}
+    let attackNumber = Math.floor(Math.random() * 5) + 1
+
+    if (attackNumber === 1) {
+        let atk = document.getElementById('myAtk01')
+        atk.style.display = "block"
+
+        let pos = parseInt(atk.style.left)
+        atk.style.left = (pos + 10) + "px"
+    }
+
 		if (attackNumber == 2)
 				
 			
-	}
 }
 
 // Attacking
@@ -123,6 +126,8 @@ function enemyHit() {
 	myEnemyHp ++
 	}
 	}
+
+setInterval(BossAttack, 1000)
 
 
   }
