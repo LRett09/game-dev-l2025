@@ -32,6 +32,10 @@
 
 	  //Movement
 	  	document.addEventListener("keydown", function(e) {
+
+		let oldX = x
+    	let oldY = y
+			
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
         if (e.key === "a") {x -= moveAmount; myDirection = "left"}
@@ -44,8 +48,13 @@
         myImg01.style.left = x + "px"
         myImg01.style.top  = y + "px"
 
-        myCheckHit()
-    })
+		if (myHitOther('myImg01','myImg02')) {
+        x = oldX
+        y = oldY
+        myImg01.style.left = x + "px"
+        myImg01.style.top  = y + "px"
+    }
+})
 
 // Collision
   function myHitOther(my1,my2){
@@ -64,17 +73,6 @@
 
     return right1 >= left2 && left1 <= right2 &&
            bottom1 >= top2 && top1 <= bottom2
-}
-
-function myCheckHit(){
-    if (myHitOther('myImg01','myImg02')){
-
-        let playerX = parseInt(myImg01.style.left)
-        let attackX = parseInt(attackBox.style.left)
-
-        myImg01.style.left = (playerX - 80) + "px"
-        attackBox.style.left = (attackX - 80) + "px"
-    }
 }
 
 //The bosses attacks
