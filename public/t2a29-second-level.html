@@ -126,7 +126,9 @@ function enemyHit() {
 	if (myEnemyHp >= 10) {
 	document.getElementById('myImg02').style.display = "none"
 	console.log ("enemy defeated!")
-	document.getElementById('myBody').style ="background-repeat:repeat; background-size:25%; background="Title Screen.gif" "
+	document.getElementById('myBody').style.backgroundImage = "url('Title Screen.gif')"
+	document.getElementById('myBody').style.backgroundRepeat = "repeat"
+	document.getElementById('myBody').style.backgroundSize = "25%"
 	} else {
 	myEnemyHp ++
 	}
