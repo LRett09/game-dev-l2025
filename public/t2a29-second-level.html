@@ -17,6 +17,7 @@
 
   let isAttacking = false
   let attackDuration = 200
+  let myDirection = false
 
   let myImg01
   let myImg02
@@ -33,8 +34,8 @@
 	  	document.addEventListener("keydown", function(e) {
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
-        if (e.key === "a") x -= moveAmount
-        if (e.key === "d") x += moveAmount
+        if (e.key === "a") x -= moveAmount; myDirection = false
+        if (e.key === "d") x += moveAmount; myDirection = true
 		
 		if (e.key === " ") {
         attack()
@@ -103,9 +104,13 @@ function attack() {
 
     let attackBox = document.getElementById("attackBox")
 
-    // Position attack in front of player (right side)
+    // Position attack in front of player
+	if (myDirection == true) {
     attackBox.style.left = (x + 80) + "px"
-    attackBox.style.top  = (y + 30) + "px"
+    attackBox.style.top  = (y + 30) + "px" } else {
+		attackBox.style.left = (x - 80) + "px"
+    	attackBox.style.top  = (y + 30) + "px" }
+		
 
     attackBox.style.display = "block"
 
