@@ -27,7 +27,9 @@
 
   let bossFight = true
   let myEnemyHp = 0
-  let myAtk01 
+  let currentAttack = 0
+  let myAtk01
+  let atkActive = false
 
   window.onload = function () {
 
@@ -80,23 +82,47 @@ function BossAttack() {
     if (!bossFight) return
 	
 
-    let attackNumber = Math.floor(Math.random() * 5) + 1
+    if (!atkActive) {
+        atkActive = true
+        currentAttack = Math.floor(Math.random() * 1) + 1
 
-    if (attackNumber === 1) {
-	    document.getElementById('myAtk01').style.display = "block"
-        document.getElementById('myAtk01').style.left = '950px'
-	  	document.getElementById('myAtk01').style.top = '400px'
+   if (currentAttack === 1) {
+            atk.style.display = "block"
+            atk.style.left = "950px"
+            atk.style.top  = "400px"
+        }
 
-        for (let i = 0; i < 4999; i++) { document.getElementById('myAtk01').style.left = oldX
-	  				 document.getElementById('myAtk01').style.top = oldY
+		//if (attackNumber == 2) { }
+		
+		//if (attackNumber == 3) { }
+		
+		//if (attackNumber == 4) { }
+		
+		//if (attackNumber == 5) { }
+
+		 if (currentAttack === 1) {
+        let bx = parseInt(atk.style.left)
+        let by = parseInt(atk.style.top)
+
+        let dx = x - bx
+        let dy = y - by
+        let dist = Math.sqrt(dx*dx + dy*dy)
+
+        let speed = 4
+
+        if (dist > 0) {
+            bx += (dx / dist) * speed
+            by += (dy / dist) * speed
+        }
+
+        atk.style.left = bx + "px"
+        atk.style.top  = by + "px"
+
+        if (dist < 30) {
+            atk.style.display = "none"
+            atkActive = false
+        }
     }
-		document.getElementById('myAtk01').style.display = "none"
-	  }
-
-		//if (attackNumber == 2) {
-				
-			
-//}
 }
 
 // Attacking
