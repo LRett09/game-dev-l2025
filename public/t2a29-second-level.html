@@ -18,8 +18,6 @@
   let isAttacking = false
   let attackDuration = 200
   let myDirection = "right"
-  let oldX = x
-  let oldY = y
 
   let myImg01
   let myImg02
@@ -37,6 +35,9 @@
 
 	  //Movement
 	  	document.addEventListener("keydown", function(e) {
+
+		 let oldX = x
+  		 let oldY = y
 			
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
