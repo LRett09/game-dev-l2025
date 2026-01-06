@@ -31,14 +31,14 @@
 
   window.onload = function () {
 
-setInterval(BossAttack, 20)
-document.getElementById('myAtk01').style.display = "none"
+	myImg01 = document.getElementById("myImg01")
+    myImg02 = document.getElementById("myImg02")
+    myAtk01 = document.getElementById("myAtk01")
 
+    myAtk01.style.display = "none"
+
+    setInterval(BossAttack, 20)
 	  
-		myImg01 = document.getElementById("myImg01") 
-	    myImg02 = document.getElementById("myImg02")
-		myAtk01 = document.getElementById("myAtk01")
-
 	  //Movement
 	  	document.addEventListener("keydown", function(e) {
 
