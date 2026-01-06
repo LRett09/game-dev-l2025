@@ -25,6 +25,7 @@
 
   let bossFight = true
   let myEnemyHp = 0
+  let myAtk01 = hidden
 
   window.onload = function () {
 
@@ -76,21 +77,25 @@
 }
 
 //The bosses attacks
-//function BossAttack() {
-    //if (!bossFight) return
+function BossAttack() {
+    if (!bossFight) return
 	
 
-    //let attackNumber = Math.floor(Math.random() * 5) + 1
+    let attackNumber = Math.floor(Math.random() * 5) + 1
 
-    //if (attackNumber === 1) {
-        //let atk = document.getElementById('myAtk01')
-        //atk.style.display = "block"
+    if (attackNumber === 1) {
+	    document.getElementById('myAtk01') = show
+        document.getElementById('myAtk01').style.left = 950 px
+	  	document.getElementById('myAtk01').style.top = 400 px
+        atk.style.display = "block"
 
-        //let pos = parseInt(atk.style.left)
-        //atk.style.left = (pos + 10) + "px"
-    //}
+        for 5000 { document.getElementById('myAtk01').style.left = oldX
+	  				 document.getElementById('myAtk01').style.top = oldY
+    }
+	  document.getElementById('myAtk01') = hidden
+	  }
 
-		//if (attackNumber == 2)
+		//if (attackNumber == 2) {
 				
 			
 //}
