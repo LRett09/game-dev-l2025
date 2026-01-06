@@ -18,6 +18,8 @@
   let isAttacking = false
   let attackDuration = 200
   let myDirection = "right"
+  let oldX = x
+  let oldY = y
 
   let myImg01
   let myImg02
@@ -25,7 +27,7 @@
 
   let bossFight = true
   let myEnemyHp = 0
-  let myAtk01 = hidden
+  let myAtk01 
 
   window.onload = function () {
 
@@ -33,9 +35,6 @@
 
 	  //Movement
 	  	document.addEventListener("keydown", function(e) {
-
-		let oldX = x
-    	let oldY = y
 			
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
@@ -84,15 +83,14 @@ function BossAttack() {
     let attackNumber = Math.floor(Math.random() * 5) + 1
 
     if (attackNumber === 1) {
-	    document.getElementById('myAtk01') = show
-        document.getElementById('myAtk01').style.left = '950 px'
-	  	document.getElementById('myAtk01').style.top = '400 px'
-        atk.style.display = "block"
+	    document.getElementById('myAtk01').style.display = "block"
+        document.getElementById('myAtk01').style.left = '950px'
+	  	document.getElementById('myAtk01').style.top = '400px'
 
-        for (i<4999; i++) { document.getElementById('myAtk01').style.left = oldX
+        for (let i = 0; i < 4999; i++) { document.getElementById('myAtk01').style.left = oldX
 	  				 document.getElementById('myAtk01').style.top = oldY
     }
-	  document.getElementById('myAtk01') = hidden
+		document.getElementById('myAtk01').style.display = "none"
 	  }
 
 		//if (attackNumber == 2) {
