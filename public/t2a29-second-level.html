@@ -31,7 +31,13 @@
 
   window.onload = function () {
 
+setInterval(BossAttack, 20)
+myAtk01.style.display = "none"
+
+	  
 		myImg01 = document.getElementById("myImg01") 
+	    myImg02 = document.getElementById("myImg02")
+		myAtk01 = document.getElementById("myAtk01")
 
 	  //Movement
 	  	document.addEventListener("keydown", function(e) {
@@ -86,11 +92,12 @@ function BossAttack() {
     if (!atkActive) {
         atkActive = true
         currentAttack = Math.floor(Math.random() * 1) + 1
+	}
 
    if (currentAttack === 1) {
-            atk.style.display = "block"
-            atk.style.left = "950px"
-            atk.style.top  = "400px"
+            myAtk01.style.display = "block"
+            myAtk01.style.left = "950px"
+            myAtk01.style.top  = "400px"
         }
 
 		//if (attackNumber == 2) { }
@@ -124,11 +131,9 @@ function BossAttack() {
             atkActive = false
         }
     }
-		
-setInterval(BossAttack, 20)
 
 }
-}
+
 
 // Attacking
 function attack() {
