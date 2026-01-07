@@ -1,5 +1,4 @@
-<body id="myBody" style="background-repeat:repeat; background-size:50%;" 
-      background="Training Background.gif">
+<body id="myBody" style="background-repeat:repeat; background-size:50%;" background="Training Background.gif">
 
 <h1 align=center>t2a25-game-template-fred.html</h1>
 
@@ -47,7 +46,13 @@ window.onload = function () {
         myImg01.style.left = x + "px"
         myImg01.style.top  = y + "px"
 
-        myCheckHit()
+		if (myHitOther('myImg01','myImg02')) {
+        x = oldX
+        y = oldY
+        myImg01.style.left = x + "px"
+        myImg01.style.top  = y + "px"
+    }
+
 		teleport()
     })
 	
@@ -74,16 +79,6 @@ function myHitOther(my1,my2){
            bottom1 >= top2 && top1 <= bottom2
 }
 
-function myCheckHit(){
-    if (myHitOther('myImg01','myImg02')){
-
-        let playerX = parseInt(myImg01.style.left)
-        let attackX = parseInt(attackBox.style.left)
-
-        myImg01.style.left = (playerX - 80) + "px"
-        attackBox.style.left = (attackX - 80) + "px"
-    }
-}
 
 // Enemy AI
 function myEnemy() {
