@@ -26,6 +26,7 @@
   let currentAttack = 1 //change this to 0 once you have more than one attack to test
   let myAtk01
   let atkActive = true
+  let atkSpawned = false
 
   window.onload = function () {
 
@@ -85,34 +86,24 @@
 //The bosses attacks
 function BossAttack() {
     if (!bossFight) return
-	
 
-    if (!atkActive) {
-        atkActive = true
-        currentAttack = Math.floor(Math.random() * 1) + 1
-	}
+    // Spawn once
+    if (!atkSpawned) {
+        currentAttack = 1
+        myAtk01.style.display = "block"
+        myAtk01.style.left = "950px"
+        myAtk01.style.top  = "400px"
+        atkSpawned = true
+    }
 
-   if (currentAttack === 1) {
-            document.getElementById('myAtk01').style.display = "block"
-            document.getElementById('myAtk01').style.left = "950px"
-            document.getElementById('myAtk01').style.top  = "400px"
-        }
-
-		//if (attackNumber == 2) { }
-		
-		//if (attackNumber == 3) { }
-		
-		//if (attackNumber == 4) { }
-		
-		//if (attackNumber == 5) { }
-
-		 if (currentAttack === 1) {
+    // Move every frame
+    if (currentAttack === 1) {
         let bx = parseInt(myAtk01.style.left)
         let by = parseInt(myAtk01.style.top)
 
         let dx = x - bx
         let dy = y - by
-        let dist = Math.sqrt(dx*dx + dy*dy)
+        let dist = Math.sqrt(dx * dx + dy * dy)
 
         let speed = 5
 
@@ -124,13 +115,14 @@ function BossAttack() {
         myAtk01.style.left = bx + "px"
         myAtk01.style.top  = by + "px"
 
+        // Reset when close
         if (dist < 30) {
             myAtk01.style.display = "none"
-            atkActive = true
+            atkSpawned = false
         }
     }
-
 }
+
 
 
 // Attacking
