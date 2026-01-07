@@ -5,10 +5,29 @@
   <div id="tip" style="color:white; align:bottom-left">Tip: I wish you luck!</div>
 
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const nextLevel = params.get("t2a29-second-level.html");
+  const tips = [
+    "I wish you luck!",
+    "Pro tip: Dont take damage",
+    "Whatever Sun Tzu would say",
+    "If it looks unsafe, it probably is.",
+    "This guy has only 5 attacks hes not that hard.",
+    "Cowardice is lame. Tank every attack like a pro.",
+    "Keep your health above zero.",
+    "Cam is chill",
+    "You will die. That’s normal.",
+    "Try winning next time?",
+    "Dodging doesnt exist so dont even try",
+    "Just dont loose!!!! :D",
+    "Strength in numbers... oh wait its a singleplayer game!! baaahaahahahahahahahahahahaahhaaaaaaaa!!!!!",
+    "Hi guys :)",
+    "A significant percentage of poeple who die are dead",
+    "Pro tip: when walking make sure to sue your feet"
+  ];
 
-  // fake delay OR real preload
+  // Pick a random tip
+  const randomIndex = Math.floor(Math.random() * tips.length);
+  document.getElementById("tip").textContent = "Tip: " + tips[randomIndex];
+
   setTimeout(() => {
     window.location.href = "t2a29-second-level.html";
   }, 2000);
