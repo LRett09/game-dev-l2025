@@ -23,7 +23,7 @@
 
   let bossFight = true
   let myEnemyHp = 0
-  let currentAttack = 0
+  let currentAttack = 1 //change this to 0 once you have more than one attack to test
   let myAtk01
   let atkActive = true
 
@@ -121,12 +121,12 @@ function BossAttack() {
             by += (dy / dist) * speed
         }
 
-        atk.style.left = bx + "px"
-        atk.style.top  = by + "px"
+        myAtk01.style.left = bx + "px"
+        myAtk01.style.top  = by + "px"
 
         if (dist < 30) {
-            atk.style.display = "none"
-            atkActive = false
+            myAtk01.style.display = "none"
+            atkActive = true
         }
     }
 
