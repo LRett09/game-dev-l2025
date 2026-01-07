@@ -24,9 +24,12 @@
   let bossFight = true
   let myEnemyHp = 0
   let currentAttack = 1 //change this to 0 once you have more than one attack to test
-  let myAtk01
   let atkActive = true
   let atkSpawned = false
+
+  let myAtk01
+  let atkStartTime = 0
+
 
   window.onload = function () {
 
@@ -88,13 +91,16 @@ function BossAttack() {
     if (!bossFight) return
 
     // Spawn once
-    if (!atkSpawned) {
-        currentAttack = 1
-        myAtk01.style.display = "block"
-        myAtk01.style.left = "950px"
-        myAtk01.style.top  = "400px"
-        atkSpawned = true
-    }
+  if (!atkSpawned) {
+    currentAttack = 1
+    myAtk01.style.display = "block"
+    myAtk01.style.left = "950px"
+    myAtk01.style.top  = "400px"
+
+    atkStartTime = Date.now()   // ⏱️ start timer
+    atkSpawned = true
+}
+
 
     // Move every frame
     if (currentAttack === 1) {
@@ -120,6 +126,11 @@ function BossAttack() {
             myAtk01.style.display = "none"
             atkSpawned = false
         }
+		if (Date.now() - atkStartTime > 5000) {
+    myAtk01.style.display = "none"
+    atkSpawned = false
+}
+
     }
 }
 
