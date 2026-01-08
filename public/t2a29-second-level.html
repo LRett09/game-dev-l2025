@@ -147,12 +147,13 @@ if (!atkSpawned) {
 
     }
 
-	  if (currentAttack == 3) { 
-		  		if (Date.now() - atkStartTime > 5000) {
-    myAtk01.style.display = "none"
+	 if (currentAttack === 3) {
+  if (Date.now() - atkStartTime > 5000) {
+    myAtk03.style.display = "none"
     atkSpawned = false
+  }
 }
-	  }
+
 }
 
 
