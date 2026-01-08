@@ -92,72 +92,65 @@
 
 //The bosses attacks
 function BossAttack() {
-    if (!bossFight) return
+  if (!bossFight) return
 
-// Spawn once
-if (!atkSpawned) {
-  currentAttack = Math.floor(Math.random() * 3) + 1
+  // Spawn once
+  if (!atkSpawned) {
+    currentAttack = Math.floor(Math.random() * 3) + 1
 
-  if (currentAttack === 1) {
-    myAtk01.style.display = "block"
-    myAtk01.style.left = "950px"
-    myAtk01.style.top  = "400px"
-  }
-
-  if (currentAttack === 3) {
-    myAtk03.style.display = "block"
-    myAtk03.style.left = (x + 10) + "px"
-    myAtk03.style.top  = (y + 10) + "px"
-  }
-
-  atkStartTime = Date.now()
-  atkSpawned = true
-}
-  
-
-
-    // Move every frame
     if (currentAttack === 1) {
-        let bx = parseInt(myAtk01.style.left)
-        let by = parseInt(myAtk01.style.top)
-
-        let dx = x - bx
-        let dy = y - by
-        let dist = Math.sqrt(dx * dx + dy * dy)
-
-        let speed = 4
-
-        if (dist > 0) {
-            bx += (dx / dist) * speed
-            by += (dy / dist) * speed
-        }
-
-        myAtk01.style.left = bx + "px"
-        myAtk01.style.top  = by + "px"
-
-        // Reset when close
-        if (dist < 30) {
-            myAtk01.style.display = "none"
-            atkSpawned = false
-        }
-		if (Date.now() - atkStartTime > 5000) {
-   	 myAtk01.style.display = "none"
- 	 atkSpawned = false
-	 currentAttack = 0
-
-}
-
+      myAtk01.style.display = "block"
+      myAtk01.style.left = "950px"
+      myAtk01.style.top  = "400px"
     }
 
-	 if (currentAttack === 3) {
-  if (Date.now() - atkStartTime > 4000) {
-    myAtk03.style.display = "none"
-    atkSpawned = false
-	currentAttack = 0
+    if (currentAttack === 3) {
+      let px = parseInt(myImg01.style.left)
+      let py = parseInt(myImg01.style.top)
 
+      myAtk03.style.display = "block"
+      myAtk03.style.left = (px + 10) + "px"
+      myAtk03.style.top  = (py + 10) + "px"
+    }
+
+    atkStartTime = Date.now()
+    atkSpawned = true
   }
-}
 
+  // Homing attack
+  if (currentAttack === 1 && atkSpawned) {
+    let bx = parseInt(myAtk01.style.left)
+    let by = parseInt(myAtk01.style.top)
+
+    let dx = x - bx
+    let dy = y - by
+    let dist = Math.sqrt(dx * dx + dy * dy)
+
+    let speed = 4
+
+    if (dist > 0) {
+      bx += (dx / dist) * speed
+      by += (dy / dist) * speed
+    }
+
+    myAtk01.style.left = bx + "px"
+    myAtk01.style.top  = by + "px"
+
+    if (dist < 30 || Date.now() - atkStartTime > 5000) {
+      myAtk01.style.display = "none"
+      atkSpawned = false
+      currentAttack = 0
+    }
+  }
+
+  // atk3 lifetime
+  if (currentAttack === 3 && atkSpawned) {
+    if (Date.now() - atkStartTime > 4000) {
+      myAtk03.style.display = "none"
+      atkSpawned = false
+      currentAttack = 0
+    }
+  }
 }
 
 
