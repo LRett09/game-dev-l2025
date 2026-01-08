@@ -6,36 +6,40 @@
 
 <script>
   const tips = [
-    "I wish you luck!",
-    "Pro tip: Dont take damage",
-    "Whatever Sun Tzu would say",
-    "If it looks unsafe, it probably is.",
-    "This guy has only 5 attacks hes not that hard.",
-    "Cowardice is lame. Tank every attack like a pro.",
-    "Keep your health above zero.",
-    "Cam is chill",
-    "You will die. That’s normal.",
-    "Try winning next time?",
-    "Dodging doesnt exist so dont even try",
-    "Just dont loose!!!! :D",
-    "Strength in numbers... oh wait its a singleplayer game!! baaahaahahahahahahahahahahaahhaaaaaaaa!!!!!",
-    "Hi guys :)",
-    "A significant percentage of poeple who die are dead",
-    "Pro tip: when walking make sure to sue your feet",
-    "Can we have a war cry please?",
-    "This music WILL be a certified banger",
-    "If I read all the first letters of the tips ive added up till now it spells: IPWITCKCYTDJSHAPCTI. Pretty cool right?",
-    "Try passive aggressive next time.",
-    "This tip is very hard to get. Not because the tip itself is rare ive just wasted alot of time adding alot of tips",
-    "I nicknamed this boss: big computer guy. Thats a lie I just needed another tip to add."
-  ];
+    'I wish you luck!',
+    'Pro tip: Dont take damage',
+    'Whatever Sun Tzu would say',
+    'If it looks unsafe, it probably is.',
+    'This guy has only 5 attacks hes not that hard.',
+    'Cowardice is lame. Tank every attack like a pro.',
+    'Keep your health above zero.',
+    'Cam is chill',
+    'You will die. That’s normal.',
+    'Try winning next time?',
+    'Dodging doesnt exist so dont even try',
+    'Just dont loose!!!! :D',
+    'Strength in numbers... oh wait its a singleplayer game!! baaahaahahahahahahahahahahaahhaaaaaaaa!!!!!',
+    'Hi guys :)',
+    'A significant percentage of poeple who die are dead',
+    'Pro tip: when walking make sure to sue your feet',
+	'Can we have a war cry please?',
+    'This music WILL be a certified banger',
+    'If I read all the first letters of the tips ive added up till now it spells: IPWITCKCYTDJSHAPCTI. Pretty cool right?',
+    'Try passive aggressive next time.',
+    'This tip is very hard to get. Not because the tip itself is rare ive just wasted alot of time adding alot of tips',
+    'I nicknamed this boss: big computer guy. Thats a lie I just needed another tip to add.',
+	'This is a tip. It is helpful. Sometimes.',
+	];
 
   // Pick a random tip
   const randomIndex = Math.floor(Math.random() * tips.length);
-  document.getElementById("tip").textContent = "Tip: " + tips[randomIndex];
+  document.getElementById("tip").innerHTML = "Tip: " + tips[randomIndex];
 
   setTimeout(() => {
     window.location.href = "t2a29-second-level.html";
   }, 2000);
+  
+  //Unga Lunga Wunga Bunga
+  
 </script>
 </body>
