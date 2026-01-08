@@ -97,24 +97,22 @@ function BossAttack() {
 // Spawn once
 if (!atkSpawned) {
   currentAttack = Math.floor(Math.random() * 3) + 1
-}
 
-	  if (currentAttack == 1) {
+  if (currentAttack === 1) {
     myAtk01.style.display = "block"
     myAtk01.style.left = "950px"
     myAtk01.style.top  = "400px"
+  }
 
-    atkStartTime = Date.now()   // ⏱️ start timer
-    atkSpawned = true
-} else { if (currentAttack == 3) {
-		  myAtk03.style.display = "block"
-		  myAtk03.style.left = (x + 10) + "px"
-		  myAtk03.style.top  = (y + 10) + "px"
+  if (currentAttack === 3) {
+    myAtk03.style.display = "block"
+    myAtk03.style.left = (x + 10) + "px"
+    myAtk03.style.top  = (y + 10) + "px"
+  }
 
-
-		atkStartTime = Date.now()   // ⏱️ start timer
-        atkSpawned = true
-	  }
+  atkStartTime = Date.now()
+  atkSpawned = true
+}
   }
 
 
