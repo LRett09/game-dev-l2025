@@ -104,6 +104,11 @@ function BossAttack() {
       myAtk01.style.top  = "400px"
     }
 
+if (currentAttack === 2) {
+  currentAttack = 1 // or 3
+}
+
+
     if (currentAttack === 3) {
       let px = parseInt(myImg01.style.left)
       let py = parseInt(myImg01.style.top)
