@@ -5,6 +5,7 @@
 <img id="attackBox" style="position:absolute; width:80px; height:120px; top:400px; left:950px" src="BaseballBat.png">
 
 <img id="myAtk01" style="position:absolute; width:80px; height:80px; top:400px; left:950px" src="BossAttack01.png">
+<img id="myAtk03" style="position:absoulute; width:80px; height:80px; top:400px; left:950px" src="BossAttack03.gif">
 
 <script>
 
@@ -28,6 +29,7 @@
   let atkSpawned = false
 
   let myAtk01
+  let myAtk03
   let atkStartTime = 0
 
 
@@ -89,17 +91,26 @@
 //The bosses attacks
 function BossAttack() {
     if (!bossFight) return
+	currentAttack = Math.floor(Math.random() * 3) + 1
 
     // Spawn once
   if (!atkSpawned) {
-    currentAttack = 1
+	  if (currentAttack == 1) {
     myAtk01.style.display = "block"
     myAtk01.style.left = "950px"
     myAtk01.style.top  = "400px"
 
     atkStartTime = Date.now()   // ⏱️ start timer
     atkSpawned = true
-}
+} else { if (currrentAttack == 3) {
+		  myAtk03.style.display = "block"
+		  myAtk03.style.left = x + 10px
+		  myAtk03.style.top = y + 10px
+
+		atkStartTime = Date.now()   // ⏱️ start timer
+        atkSpawned = true
+	  }
+  }
 
 
     // Move every frame
@@ -132,6 +143,13 @@ function BossAttack() {
 }
 
     }
+
+	  if (currentAttack == 3) { 
+		  		if (Date.now() - atkStartTime > 5000) {
+    myAtk01.style.display = "none"
+    atkSpawned = false
+}
+	  }
 }
 
 
