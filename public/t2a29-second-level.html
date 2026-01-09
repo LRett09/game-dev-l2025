@@ -17,8 +17,11 @@
   let isAttacking = false
   let attackDuration = 200
   let myDirection = "right"
+  
   let playerHP = 3
   let iFrameTime = 0
+  let lastHitTime = 0
+  const IFRAME_DURATION = 1000 
 
   let myImg01
   let myImg02
@@ -214,18 +217,28 @@ function enemyHit() {
 	}
 
  //Player hp 
-	  function playerHit() {
-		  if (playerHP >= 0) {
-			  document.getElementById('myImg01').style.display = "none"
-			  console.log ("player looses")
-			  document.getElementById('myBody').style.backgroundImage = "url('Death Screen.gif')"
-			  document.getElementById('myBody').style.backgroundRepeat = "repeat"
-			  document.getElementById('myBody').style.backgroundSize = "85%"
+	function playerHit() {
+  const now = Date.now()
 
-  } else {
-			  playerHP --
-		  }
-	  }
+  // i-frame check
+  if (now - lastHitTime < IFRAME_DURATION) return
+
+  lastHitTime = now
+  playerHP--
+  myImg01.style.opacity = "0.5"
+  setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
+
+
+  console.log("Player HP:", playerHP)
+
+  if (playerHP <= 0) {
+    document.getElementById('myImg01').style.display = "none"
+    document.getElementById('myBody').style.backgroundImage = "url('Death Screen.gif')"
+    document.getElementById('myBody').style.backgroundRepeat = "repeat"
+    document.getElementById('myBody').style.backgroundSize = "85%"
+  }
+}
+
   }
 
 </script>
