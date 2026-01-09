@@ -243,13 +243,8 @@ function enemyHit() {
 }
 
 function reset() {
-	 
-  let moveAmount = 10
-  let x = 50
-  let y = 800
-
+	
   let isAttacking = false
-  let attackDuration = 200
   let myDirection = "right"
   
   let playerHP = 3
@@ -257,25 +252,18 @@ function reset() {
   let lastHitTime = 0
   const IFRAME_DURATION = 1000 
 
-  let myImg01
-  let myImg02
-  let attackBox
-
   let bossFight = true
   let myEnemyHp = 0
   let currentAttack = 0
   let atkActive = true
   let atkSpawned = false
 
-  let myAtk01
-  let myAtk03
   let atkStartTime = 0
 
     document.getElementById('myImg01').style.display = "block"
     document.getElementById('myBody').style.backgroundImage = "url('Boss Background.gif')"
     document.getElementById('myBody').style.backgroundRepeat = "repeat"
     document.getElementById('myBody').style.backgroundSize = "25%"
-	bossFight = true
 
 }
   }
