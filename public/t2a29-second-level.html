@@ -271,7 +271,12 @@ function reset() {
   let myAtk03
   let atkStartTime = 0
 
-<body id="myBody" style="background-repeat:repeat; background-size:25%;" background="Boss Background.gif">
+    document.getElementById('myImg01').style.display = "block"
+    document.getElementById('myBody').style.backgroundImage = "url('Boss Background.gif')"
+    document.getElementById('myBody').style.backgroundRepeat = "repeat"
+    document.getElementById('myBody').style.backgroundSize = "25%"
+	bossFight = true
+
 }
   }
 
