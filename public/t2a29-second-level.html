@@ -214,7 +214,7 @@ function enemyHit() {
 
  //Player hp 
 	  function playerHit() {
-		  if (playerHP <= 0) {
+		  if (playerHP >= 0) {
 			  document.getElementById('myImg01').style.display = "none"
 			  console.log ("player looses")
 			  document.getElementById('myBody').style.backgroundImage = "url('Death Screen.gif')"
