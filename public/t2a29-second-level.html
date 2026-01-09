@@ -17,6 +17,7 @@
   let isAttacking = false
   let attackDuration = 200
   let myDirection = "right"
+  let playerHP = 3
 
   let myImg01
   let myImg02
@@ -138,6 +139,10 @@ if (currentAttack === 2) {
       by += (dy / dist) * speed
     }
 
+	if (myHitOther('myAtk01', 'myImg01')) {
+        playerHit()
+    }
+
     myAtk01.style.left = bx + "px"
     myAtk01.style.top  = by + "px"
 
@@ -150,7 +155,12 @@ if (currentAttack === 2) {
 
   // atk3 lifetime
   if (currentAttack === 3 && atkSpawned) {
-    if (Date.now() - atkStartTime > 4000) {
+   
+	  if (myHitOther('myAtk03', 'myImg01')) {
+        playerHit()
+    }
+	  
+	  if (Date.now() - atkStartTime > 4000) {
       myAtk03.style.display = "none"
       atkSpawned = false
       currentAttack = 0
@@ -202,6 +212,18 @@ function enemyHit() {
 	}
 	}
 
-  }
+ //Player hp 
+	  function playerHit() {
+		  if (playerHP <= 0) {
+			  document.getElementById('myImg01').style.display = "none"
+			  console.log ("player looses")
+			  document.getElementById('myBody').style.backgroundImage = "url('Death Screen.gif')"
+			  document.getElementById('myBody').style.backgroundRepeat = "repeat"
+			  document.getElementById('myBody').style.backgroundSize = "85%"
+
+  } else {
+			  playerHP --
+		  }
+	  }
 
 </script>
