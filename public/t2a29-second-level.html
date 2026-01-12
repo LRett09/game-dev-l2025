@@ -36,6 +36,7 @@
   let myAtk01
   let myAtk03
   let atk03CanHit
+  let atk03TimerStarted = false
   let atkStartTime = 0
 
 
@@ -108,6 +109,8 @@ function BossAttack() {
       myAtk01.style.display = "block"
       myAtk01.style.left = "950px"
       myAtk01.style.top  = "400px"
+	  atkSpawned = true
+ 	 atkStartTime = Date.now()
     }
 
 if (currentAttack === 2) {
@@ -115,7 +118,7 @@ if (currentAttack === 2) {
 }
 
 
-  if (currentAttack === 3) {
+if (currentAttack === 3 && !atkSpawned) {
   let px = parseInt(myImg01.style.left)
   let py = parseInt(myImg01.style.top)
 
@@ -124,8 +127,12 @@ if (currentAttack === 2) {
   myAtk03.style.top  = (py + 10) + "px"
 
   atk03CanHit = false
-
+  atk03TimerStarted = false
+  atkSpawned = true
+  atkStartTime = Date.now()
 }
+
+
 
 
   // Homing attack
@@ -159,25 +166,28 @@ if (currentAttack === 2) {
   }
 
   // atk3 lifetime
-  if (currentAttack === 3 && atkSpawned) {
+ if (currentAttack === 3 && atkSpawned) {
 
-	  // enable damage after animation windup
-  setTimeout(() => {
-    atk03CanHit = true
-  }, 3000) // adjust to match animation timing
-   
-	if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) {
-  playerHit()
-}
-
-	  
-	if (Date.now() - atkStartTime > 4000) {
-  myAtk03.style.display = "none"
-  atkSpawned = false
-  currentAttack = 0
-  atk03CanHit = false
-}
+  if (!atk03TimerStarted) {
+    atk03TimerStarted = true
+    setTimeout(() => {
+      atk03CanHit = true
+    }, 3000)
   }
+
+  if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) {
+    playerHit()
+  }
+
+  if (Date.now() - atkStartTime > 4000) {
+    myAtk03.style.display = "none"
+    atkSpawned = false
+    currentAttack = 0
+    atk03CanHit = false
+    atk03TimerStarted = false
+  }
+}
+
 }
 
 
