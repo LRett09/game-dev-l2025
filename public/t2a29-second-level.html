@@ -181,16 +181,15 @@ function resetAttack() {
   myAtk03.style.display = "none"
   currentAttack = null
   atkSpawned = false
+
+  isAttacking = false
 }
-
-
 
 // Attacking
 function attack() {
   if (isAttacking) return
   isAttacking = true
 
-  // Reset box first
   attackBox.style.display = "block"
 
   if (myDirection === "right") {
@@ -206,6 +205,7 @@ function attack() {
     enemyHit()
   }
 
+  // Ensure attack always despawns and unlocks
   setTimeout(() => {
     attackBox.style.display = "none"
     isAttacking = false
