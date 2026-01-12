@@ -178,6 +178,7 @@ function resetAttack() {
   myAtk01.style.display = "none"
   myAtk03.style.display = "none"
   currentAttack = null
+  atkSpawned = false
 }
 
 
@@ -234,11 +235,8 @@ function enemyHit() {
 
   lastHitTime = now
   playerHP--
-  
-  myAtk01.style.display = "none"
-  myAtk03.style.display = "none"
-  atkSpawned = false
-  currentAttack = 0
+
+  resetAttack()
  
   myImg01.style.opacity = "0.5"
   setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
