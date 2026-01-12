@@ -226,6 +226,12 @@ function enemyHit() {
 
   lastHitTime = now
   playerHP--
+  
+  myAtk01.style.display = "none"
+  myAtk03.style.display = "none"
+  atkSpawned = false
+  currentAttack = 0
+ 
   myImg01.style.opacity = "0.5"
   setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
 
@@ -243,31 +249,40 @@ function enemyHit() {
 }
 
 function reset() {
-	
-  let isAttacking = false
-  let myDirection = "right"
   
-  let playerHP = 3
-  let iFrameTime = 0
-  let lastHitTime = 0
-  const IFRAME_DURATION = 1000 
+  isAttacking = false
+  myDirection = "right"
+  playerHP = 3
+  lastHitTime = 0
+  myImg01.style.opacity = "1"
 
-  let bossFight = true
-  let myEnemyHp = 0
-  let currentAttack = 0
-  let atkActive = true
-  let atkSpawned = false
+  
+  bossFight = true
+  myEnemyHp = 0
+  currentAttack = 0
+  atkActive = true
+  atkSpawned = false
+  atkStartTime = 0
 
-  let atkStartTime = 0
 
-    document.getElementById('myImg01').style.display = "block"
-    document.getElementById('myBody').style.backgroundImage = "url('Boss Background.gif')"
-    document.getElementById('myBody').style.backgroundRepeat = "repeat"
-    document.getElementById('myBody').style.backgroundSize = "25%"
+  myAtk01.style.display = "none"
+  myAtk03.style.display = "none"
 
-	console.log ("reset")
 
+  x = 50
+  y = 800
+  myImg01.style.left = x + "px"
+  myImg01.style.top = y + "px"
+  myImg01.style.display = "block"
+
+  document.getElementById('myBody').style.backgroundImage =
+    "url('Boss Background.gif')"
+  document.getElementById('myBody').style.backgroundRepeat = "repeat"
+  document.getElementById('myBody').style.backgroundSize = "25%"
+
+  console.log("reset complete")
 }
+
   }
 
 </script>
