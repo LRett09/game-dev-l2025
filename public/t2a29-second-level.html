@@ -125,10 +125,6 @@ if (currentAttack === 2) {
 
   atk03CanHit = false
 
-  // enable damage after animation windup
-  setTimeout(() => {
-    atk03CanHit = true
-  }, 3000) // adjust to match animation timing
 }
 
 
@@ -164,6 +160,11 @@ if (currentAttack === 2) {
 
   // atk3 lifetime
   if (currentAttack === 3 && atkSpawned) {
+
+	  // enable damage after animation windup
+  setTimeout(() => {
+    atk03CanHit = true
+  }, 3000) // adjust to match animation timing
    
 	if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) {
   playerHit()
