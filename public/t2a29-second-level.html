@@ -39,6 +39,24 @@
   let atkStartTime = 0
 
 
+function myHitOther(my1,my2){
+    let a = document.getElementById(my1)
+    let b = document.getElementById(my2)
+
+    let left1 = parseInt(a.style.left)
+    let right1 = left1 + parseInt(a.style.width)
+    let top1 = parseInt(a.style.top)
+    let bottom1 = top1 + parseInt(a.style.height)
+
+    let left2 = parseInt(b.style.left)
+    let right2 = left2 + parseInt(b.style.width)
+    let top2 = parseInt(b.style.top)
+    let bottom2 = top2 + parseInt(b.style.height)
+
+    return right1 >= left2 && left1 <= right2 &&
+           bottom1 >= top2 && top1 <= bottom2
+}
+
   window.onload = function () {
 
 	myImg01 = document.getElementById("myImg01")
@@ -78,25 +96,6 @@
         myImg01.style.top  = y + "px"
     }
 })
-
-// Collision
-  function myHitOther(my1,my2){
-    let a = document.getElementById(my1)
-    let b = document.getElementById(my2)
-
-    let left1 = parseInt(a.style.left)
-    let right1 = left1 + parseInt(a.style.width)
-    let top1 = parseInt(a.style.top)
-    let bottom1 = top1 + parseInt(a.style.height)
-
-    let left2 = parseInt(b.style.left)
-    let right2 = left2 + parseInt(b.style.width)
-    let top2 = parseInt(b.style.top)
-    let bottom2 = top2 + parseInt(b.style.height)
-
-    return right1 >= left2 && left1 <= right2 &&
-           bottom1 >= top2 && top1 <= bottom2
-}
 
 //The bosses attacks
 function BossAttack() {
