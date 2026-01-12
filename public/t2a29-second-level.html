@@ -47,7 +47,9 @@
 	myAtk03 = document.getElementById("myAtk03")
 	myAtk03.style.display = "none"
 
-    myAtk01.style.display = "none"
+   attackBox = document.getElementById("attackBox")
+   attackBox.style.display = "none"
+
 
     setInterval(BossAttack, 20)
 	  
@@ -185,31 +187,29 @@ function resetAttack() {
 
 // Attacking
 function attack() {
-    if (isAttacking) return
-    isAttacking = true
+  if (isAttacking) return
+  isAttacking = true
 
-    let attackBox = document.getElementById("attackBox")
+  // Reset box first
+  attackBox.style.display = "block"
 
-    // Position attack in front of player
-	if (myDirection == "right") {
+  if (myDirection === "right") {
     attackBox.style.left = (x + 75) + "px"
-    attackBox.style.top  = (y - 20) + "px" } else {
-		attackBox.style.left = (x - 30) + "px"
-    	attackBox.style.top  = (y + 30) + "px" }
-		
+    attackBox.style.top  = (y - 20) + "px"
+  } else {
+    attackBox.style.left = (x - 60) + "px"
+    attackBox.style.top  = (y - 20) + "px"
+  }
 
-    attackBox.style.display = "block"
+  // Check hit immediately
+  if (myHitOther('attackBox', 'myImg02')) {
+    enemyHit()
+  }
 
-    // Check hit immediately
-    if (myHitOther('attackBox', 'myImg02')) {
-        enemyHit()
-    }
-
-    // Remove attack after short time
-    setTimeout(() => {
-        attackBox.style.display = "none"
-        isAttacking = false
-    }, attackDuration)
+  setTimeout(() => {
+    attackBox.style.display = "none"
+    isAttacking = false
+  }, attackDuration)
 }
 
 // When Enemy is hit
