@@ -35,6 +35,7 @@
 
   let myAtk01
   let myAtk03
+  let atk03CanHit
   let atkStartTime = 0
 
 
@@ -114,18 +115,22 @@ if (currentAttack === 2) {
 }
 
 
-    if (currentAttack === 3) {
-      let px = parseInt(myImg01.style.left)
-      let py = parseInt(myImg01.style.top)
+  if (currentAttack === 3) {
+  let px = parseInt(myImg01.style.left)
+  let py = parseInt(myImg01.style.top)
 
-      myAtk03.style.display = "block"
-      myAtk03.style.left = (px + 10) + "px"
-      myAtk03.style.top  = (py + 10) + "px"
-    }
+  myAtk03.style.display = "block"
+  myAtk03.style.left = (px + 10) + "px"
+  myAtk03.style.top  = (py + 10) + "px"
 
-    atkStartTime = Date.now()
-    atkSpawned = true
-  }
+  atk03CanHit = false
+
+  // enable damage after animation windup
+  setTimeout(() => {
+    atk03CanHit = true
+  }, 3000) // adjust to match animation timing
+}
+
 
   // Homing attack
   if (currentAttack === 1 && atkSpawned) {
@@ -160,18 +165,19 @@ if (currentAttack === 2) {
   // atk3 lifetime
   if (currentAttack === 3 && atkSpawned) {
    
-	  if (myHitOther('myAtk03', 'myImg01')) {
-        playerHit()
-    }
-	  
-	  if (Date.now() - atkStartTime > 4000) {
-      myAtk03.style.display = "none"
-      atkSpawned = false
-      currentAttack = 0
-    }
-  }
+	if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) {
+  playerHit()
 }
 
+	  
+	if (Date.now() - atkStartTime > 4000) {
+  myAtk03.style.display = "none"
+  atkSpawned = false
+  currentAttack = 0
+  atk03CanHit = false
+}
+  }
+}
 
 
 // Attacking
