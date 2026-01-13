@@ -10,7 +10,7 @@
 
 <script>
 
-//Global Variables
+//=====GLOBAL VARIABLES=====
   let moveAmount = 10
   let x = 50
   let y = 800
@@ -35,11 +35,12 @@
   let atkSpawned = false
 
   let myAtk01
+  let myAtk02
   let myAtk03
   let atk03CanHit
   let atkStartTime = 0
 
-
+//=====COLLISION=====
 function myHitOther(my1,my2){
     let a = document.getElementById(my1)
     let b = document.getElementById(my2)
@@ -72,7 +73,7 @@ function myHitOther(my1,my2){
 
     setInterval(BossAttack, 20)
 	  
-	  //Movement
+//=====PLAYER MOVEMENT=====
 	  	document.addEventListener("keydown", function(e) {
 
 		 let oldX = x
@@ -98,12 +99,11 @@ function myHitOther(my1,my2){
     }
 })
 
-//The bosses attacks
+//=====BOSS ATTACKS=====
 function BossAttack() {
   if (!bossFight) return
 
-  // Spawn once
-// Spawn phase
+//=====SPAWN PHASE=====
 if (!atkSpawned) {
   currentAttack = Math.floor(Math.random() * 3) + 1
 
@@ -115,6 +115,13 @@ if (!atkSpawned) {
     myAtk01.style.left = "950px"
     myAtk01.style.top = "400px"
   }
+
+  if (currentAttack === 2) {
+	  myAtk02.style.display = "block"
+	  myAtk02.style.left= "950px"
+	  myAtk02.style.top = "400px"
+	  myAtk02.style.size = 200%
+		  }
 
   if (currentAttack === 3) {
     myAtk03.style.display = "block"
@@ -128,7 +135,7 @@ if (!atkSpawned) {
 
 
 
-  // Homing attack
+  //=====HOMING=====
   if (currentAttack === 1 && atkSpawned) {
     let bx = parseInt(myAtk01.style.left)
     let by = parseInt(myAtk01.style.top)
@@ -156,7 +163,17 @@ if (!atkSpawned) {
     }
   }
 
-  // atk3 lifetime
+  //======SHOCKWAVE=====
+	if (currentAttack === 2 && atkSpawned) {
+
+		if (myHitOther('myAtk02', 'myImg01')) {
+			playerHit()
+		}
+		if (atkStartTime > 5000) {
+			resetAttack()
+		}
+
+  //=====EXPLODE=====
  if (currentAttack === 3 && atkSpawned) {
 
   if (Date.now() - atkStartTime > 3000) {
@@ -185,7 +202,7 @@ function resetAttack() {
   isAttacking = false
 }
 
-// Attacking
+//=====PLAYER ATTACK=====
 function attack() {
   if (isAttacking) return
   isAttacking = true
@@ -200,19 +217,18 @@ function attack() {
     attackBox.style.top  = (y - 20) + "px"
   }
 
-  // Check hit immediately
   if (myHitOther('attackBox', 'myImg02')) {
     enemyHit()
   }
 
-  // Ensure attack always despawns and unlocks
+  //=====DESPAWN=====
   setTimeout(() => {
     attackBox.style.display = "none"
     isAttacking = false
   }, attackDuration)
 }
 
-// When Enemy is hit
+//=====HIT ENEMY=====
 function enemyHit() {
 	if (myEnemyHp >= 10) {
 	document.getElementById('myImg02').style.display = "none"
@@ -226,11 +242,10 @@ function enemyHit() {
 	}
 	}
 
- //Player hp 
+ //=====HP=====
 	function playerHit() {
   const now = Date.now()
 
-  // i-frame check
   if (now - lastHitTime < IFRAME_DURATION) return
 
   lastHitTime = now
@@ -254,6 +269,7 @@ function enemyHit() {
   }
 }
 
+//=====RESET AFTER DEATH=====	  
 function reset() {
   
   isAttacking = false
