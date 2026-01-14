@@ -53,6 +53,8 @@ let atkSpawned = false
 
 let myAtk01
 let myAtk02
+let atk02VelX = 4
+let atk02VelY = 3
 let myAtk03
 let atk03CanHit
 let atkStartTime = 0
@@ -96,7 +98,7 @@ window.onload = function () {
   //=====PLAYER MOVEMENT=====
 document.addEventListener("keydown", function (e) {
 
-  keys[e.key] = true   // 👈 NEW
+  keys[e.key] = true
 
   if (e.key === " ") attack()
 
@@ -160,11 +162,15 @@ function BossAttack() {
       myAtk01.style.top = "400px"
     }
 
-    if (currentAttack === 2) {
-      myAtk02.style.display = "block"
-      myAtk02.style.left = "950px"
-      myAtk02.style.top = "400px"
-    }
+  if (currentAttack === 2) {
+  myAtk02.style.display = "block"
+  myAtk02.style.left = "950px"
+  myAtk02.style.top = "400px"
+
+  atk02VelX = Math.random() > 0.5 ? 4 : -4
+  atk02VelY = Math.random() > 0.5 ? 3 : -3
+}
+
 
     if (currentAttack === 3) {
       myAtk03.style.display = "block"
@@ -198,12 +204,33 @@ function BossAttack() {
     if (dist < 30 || Date.now() - atkStartTime > 5000) resetAttack()
   }
 
-  //=====SHOCKWAVE=====
-  if (currentAttack === 2 && atkSpawned) {
-    if (myHitOther('myAtk02', 'myImg01')) playerHit()
-    if (Date.now() - atkStartTime > 5000) resetAttack()
+  //=====SHAKRAM=====
+ if (currentAttack === 2 && atkSpawned) {
+  let bx = parseInt(myAtk02.style.left)
+  let by = parseInt(myAtk02.style.top)
+
+  bx += atk02VelX
+  by += atk02VelY
+
+  if (bx <= 0 || bx >= window.innerWidth - 80) {
+    atk02VelX *= -1
   }
 
+  if (by <= 0 || by >= window.innerHeight - 80) {
+    atk02VelY *= -1
+  }
+
+  myAtk02.style.left = bx + "px"
+  myAtk02.style.top = by + "px"
+
+  if (myHitOther('myAtk02', 'myImg01')) {
+    playerHit()
+  }
+
+  if (Date.now() - atkStartTime > 5000) {
+    resetAttack()
+  }
+}
   //=====EXPLODE=====
   if (currentAttack === 3 && atkSpawned) {
     if (Date.now() - atkStartTime > 3000) atk03CanHit = true
