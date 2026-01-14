@@ -24,7 +24,6 @@ const ACCEL = 1.2
 const MAX_SPEED = 5 
 const FRICTION = 0.85 
 let keys = {}
-let teleported = false
 
 document.addEventListener("keydown", e => keys[e.key] = true)
 document.addEventListener("keyup", e => keys[e.key] = false)
@@ -160,11 +159,10 @@ function enemyHit() {
 	
 // To go to the next stage
 function teleport() {
-    if (myHitOther('myImg01', 'rift') && teleport(false)) {
+    if (myHitOther('myImg01', 'rift')) {
         myImg01.style.left = '0px'
         myImg01.style.top  = '0px'
         console.log("rift entered")
-		teleported = true
         location = "loadingscreen.html"
     }
 }
