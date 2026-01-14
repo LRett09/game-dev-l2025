@@ -7,91 +7,183 @@
 
 <script>
 
-// ===== GLOBAL VARIABLES =====
-let enemyX = 950
-let enemyY = 0
-let enemySpeed = 10
-let myEnemyHp = 0
-let myClock
-
+//=====GLOBAL VARIABLES=====
 let moveAmount = 10
 let x = 50
-let y = 400
+let y = 800
 
- let isAttacking = false
-  let attackDuration = 200
-  let myDirection = "right"
+let isAttacking = false
+let attackDuration = 200
+let myDirection = "right"
+
+let musicStarted = false
+let bossMusic = document.getElementById("CRITICAL OVERLOAD.mp3")
+
+let playerHP = 3
+let iFrameTime = 0
+let lastHitTime = 0
+const IFRAME_DURATION = 1000
 
 let myImg01
 let myImg02
-let myPortal
+let attackBox
+
+let bossFight = true
+let myEnemyHp = 0
+let currentAttack = 0
+let atkActive = true
+let atkSpawned = false
+
+let myAtk01
+let myAtk02
+let myAtk03
+let atk03CanHit
+let atkStartTime = 0
+
+//=====COLLISION=====
+function myHitOther(my1, my2) {
+  let a = document.getElementById(my1)
+  let b = document.getElementById(my2)
+
+  let left1 = parseInt(a.style.left)
+  let right1 = left1 + parseInt(a.style.width)
+  let top1 = parseInt(a.style.top)
+  let bottom1 = top1 + parseInt(a.style.height)
+
+  let left2 = parseInt(b.style.left)
+  let right2 = left2 + parseInt(b.style.width)
+  let top2 = parseInt(b.style.top)
+  let bottom2 = top2 + parseInt(b.style.height)
+
+  return right1 >= left2 && left1 <= right2 &&
+         bottom1 >= top2 && top1 <= bottom2
+}
 
 window.onload = function () {
 
-		myImg01 = document.getElementById("myImg01")
-		myImg02 = document.getElementById("myImg02")
-		myPortal = document.getElementById("rift")
+  myImg01 = document.getElementById("myImg01")
+  myImg02 = document.getElementById("myImg02")
 
-    document.addEventListener("keydown", function(e) {
-        if (e.key === "w") y -= moveAmount
-        if (e.key === "s") y += moveAmount
-        if (e.key === "a") {x -= moveAmount; myDirection = "left"}
-        if (e.key === "d") {x += moveAmount; myDirection = "right"}
-		
-		if (e.key === " ") {
-        attack()
-		}
+  myAtk01 = document.getElementById("myAtk01")
+  myAtk02 = document.getElementById("myAtk02")
+  myAtk03 = document.getElementById("myAtk03")
 
-        myImg01.style.left = x + "px"
-        myImg01.style.top  = y + "px"
+  myAtk02.style.display = "none"
+  myAtk03.style.display = "none"
 
-		if (myHitOther('myImg01','myImg02')) {
-        x = oldX
-        y = oldY
-        myImg01.style.left = x + "px"
-        myImg01.style.top  = y + "px"
+  attackBox = document.getElementById("attackBox")
+  attackBox.style.display = "none"
+
+  setInterval(BossAttack, 20)
+
+  //=====PLAYER MOVEMENT=====
+  document.addEventListener("keydown", function (e) {
+
+    let oldX = x
+    let oldY = y
+
+    if (e.key === "w") y -= moveAmount
+    if (e.key === "s") y += moveAmount
+    if (e.key === "a") { x -= moveAmount; myDirection = "left" }
+    if (e.key === "d") { x += moveAmount; myDirection = "right" }
+
+    if (e.key === " ") attack()
+
+    if (!musicStarted) {
+      bossMusic.volume = 0.6
+      bossMusic.play()
+      musicStarted = true
     }
 
-		teleport()
-    })
-	
+    myImg01.style.left = x + "px"
+    myImg01.style.top = y + "px"
 
-    myClock = setInterval(myEnemy, 600)
+    if (myHitOther('myImg01', 'myImg02')) {
+      x = oldX
+      y = oldY
+      myImg01.style.left = x + "px"
+      myImg01.style.top = y + "px"
+    }
+  })
 }
 
-// Collision
-function myHitOther(my1,my2){
-    let a = document.getElementById(my1)
-    let b = document.getElementById(my2)
+//=====BOSS ATTACKS=====
+function BossAttack() {
+  if (!bossFight) return
 
-    let left1 = parseInt(a.style.left)
-    let right1 = left1 + parseInt(a.style.width)
-    let top1 = parseInt(a.style.top)
-    let bottom1 = top1 + parseInt(a.style.height)
+  //=====SPAWN=====
+  if (!atkSpawned) {
+    currentAttack = Math.floor(Math.random() * 3) + 1
+    atkSpawned = true
+    atkStartTime = Date.now()
 
-    let left2 = parseInt(b.style.left)
-    let right2 = left2 + parseInt(b.style.width)
-    let top2 = parseInt(b.style.top)
-    let bottom2 = top2 + parseInt(b.style.height)
+    if (currentAttack === 1) {
+      myAtk01.style.display = "block"
+      myAtk01.style.left = "950px"
+      myAtk01.style.top = "400px"
+    }
 
-    return right1 >= left2 && left1 <= right2 &&
-           bottom1 >= top2 && top1 <= bottom2
+    if (currentAttack === 2) {
+      myAtk02.style.display = "block"
+      myAtk02.style.left = "950px"
+      myAtk02.style.top = "400px"
+    }
+
+    if (currentAttack === 3) {
+      myAtk03.style.display = "block"
+      myAtk03.style.left = (x + 10) + "px"
+      myAtk03.style.top = (y + 10) + "px"
+      atk03CanHit = false
+    }
+  }
+
+  //=====HOMING=====
+  if (currentAttack === 1 && atkSpawned) {
+    let bx = parseInt(myAtk01.style.left)
+    let by = parseInt(myAtk01.style.top)
+
+    let dx = x - bx
+    let dy = y - by
+    let dist = Math.sqrt(dx * dx + dy * dy)
+
+    let speed = 4
+
+    if (dist > 0) {
+      bx += (dx / dist) * speed
+      by += (dy / dist) * speed
+    }
+
+    if (myHitOther('myAtk01', 'myImg01')) playerHit()
+
+    myAtk01.style.left = bx + "px"
+    myAtk01.style.top = by + "px"
+
+    if (dist < 30 || Date.now() - atkStartTime > 5000) resetAttack()
+  }
+
+  //=====SHOCKWAVE=====
+  if (currentAttack === 2 && atkSpawned) {
+    if (myHitOther('myAtk02', 'myImg01')) playerHit()
+    if (Date.now() - atkStartTime > 5000) resetAttack()
+  }
+
+  //=====EXPLODE=====
+  if (currentAttack === 3 && atkSpawned) {
+    if (Date.now() - atkStartTime > 3000) atk03CanHit = true
+    if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) playerHit()
+    if (Date.now() - atkStartTime > 4000) resetAttack()
+  }
 }
 
-
-// Enemy AI
-function myEnemy() {
-    let direction = Math.random() < 0.5 ? -1 : 1
-    enemyX += direction * enemySpeed
-
-    if (enemyX < 0) enemyX = 0
-    if (enemyX > window.innerWidth - 100)
-        enemyX = window.innerWidth - 100
-		
-    document.getElementById('myImg02').style.left = enemyX + "px"
+function resetAttack() {
+  myAtk01.style.display = "none"
+  myAtk03.style.display = "none"
+  currentAttack = null
+  atkSpawned = false
+  isAttacking = false
 }
 
-// Attacking
+//=====PLAYER ATTACK=====
 function attack() {
   if (isAttacking) return
   isAttacking = true
@@ -100,38 +192,68 @@ function attack() {
 
   if (myDirection === "right") {
     attackBox.style.left = (x + 75) + "px"
-    attackBox.style.top  = (y - 20) + "px"
+    attackBox.style.top = (y - 20) + "px"
   } else {
     attackBox.style.left = (x - 60) + "px"
-    attackBox.style.top  = (y - 20) + "px"
+    attackBox.style.top = (y - 20) + "px"
   }
 
-  if (myHitOther('attackBox', 'myImg02')) {
-    enemyHit()
-  }
+  if (myHitOther('attackBox', 'myImg02')) enemyHit()
+
+  setTimeout(() => {
+    attackBox.style.display = "none"
+    isAttacking = false
+  }, attackDuration)
 }
 
-// When Enemy is hit
+//=====HIT ENEMY=====
 function enemyHit() {
-	if (myEnemyHp >= 5) {
-	document.getElementById('myImg02').style.display = "none"
-	} else {
-	console.log ("enemy defeated!")
-	myEnemyHp ++
-	}
-	}
-	
-// To go to the next stage
-function teleport() {
-    if (myHitOther('myImg01', 'rift')) {
-        myImg01.style.left = '0px'
-        myImg01.style.top  = '0px'
-        console.log("rift entered")
-        location = "loadingscreen.html"
-    }
+  if (myEnemyHp >= 13) {
+    myImg02.style.display = "none"
+    bossFight = false
+  } else {
+    myEnemyHp++
+  }
 }
 
+//=====PLAYER HIT=====
+function playerHit() {
+  const now = Date.now()
+  if (now - lastHitTime < IFRAME_DURATION) return
+
+  lastHitTime = now
+  playerHP--
+  resetAttack()
+
+  myImg01.style.opacity = "0.5"
+  setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
+
+  if (playerHP <= 0) reset()
+}
+
+//=====RESET=====
+function reset() {
+  isAttacking = false
+  myDirection = "right"
+  playerHP = 3
+  lastHitTime = 0
+
+  bossFight = true
+  myEnemyHp = 0
+  currentAttack = 0
+  atkSpawned = false
+
+  myAtk01.style.display = "none"
+  myAtk03.style.display = "none"
+
+  x = 50
+  y = 800
+  myImg01.style.left = x + "px"
+  myImg01.style.top = y + "px"
+  myImg01.style.display = "block"
+}
 </script>
+
 
 </body>
 
