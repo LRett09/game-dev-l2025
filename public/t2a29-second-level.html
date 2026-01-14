@@ -7,6 +7,7 @@
 <img id="myAtk01" style="position:absolute; width:80px; height:80px; top:400px; left:950px" src="BossAttack01.png">
 <img id="myAtk02" style="position:absolute; width:80px; height:80px; top:400px; left:950px" src="BossAttack02.gif">
 <img id="myAtk03" style="position:absolute; width:80px; height:80px; top:400px; left:950px" src="BossAttack03.gif">
+<img id="myAtk04" style="position:absolute; width:80px; height:80px; top:400px; left:950px" src="BossAttack04.gif">
 
 <audio id="bossMusic" src="CRITICAL OVERLOAD.mp3" loop></audio>
 
@@ -58,6 +59,7 @@ let atk02VelY = 3
 let myAtk03
 let atk03CanHit
 let atkStartTime = 0
+let myAtk04
 
 //=====COLLISION=====
 function myHitOther(my1, my2) {
@@ -86,9 +88,12 @@ window.onload = function () {
   myAtk01 = document.getElementById("myAtk01")
   myAtk02 = document.getElementById("myAtk02")
   myAtk03 = document.getElementById("myAtk03")
+  myAtk04 = document.getElementById("myAtk04")
 
+  myAtk01.style.display = "none"
   myAtk02.style.display = "none"
   myAtk03.style.display = "none"
+  myAtk04.style.display = "none"
 
   attackBox = document.getElementById("attackBox")
   attackBox.style.display = "none"
@@ -178,6 +183,11 @@ function BossAttack() {
       myAtk03.style.top = (y + 10) + "px"
       atk03CanHit = false
     }
+
+    if (currentAttack === 4) {
+      myAtk04.style.display = "block"
+      myAtk04.style.top = "400px"
+      myAtk04.style.left = "1000px"
   }
 
   //=====HOMING=====
@@ -237,6 +247,12 @@ function BossAttack() {
     if (atk03CanHit && myHitOther('myAtk03', 'myImg01')) playerHit()
     if (Date.now() - atkStartTime > 4000) resetAttack()
   }
+
+  //=====SWORD=====
+    if (currentAttack === 4 && atkSpawned) {
+      if (myHitOther('myAtk04', 'myImg01')) {
+        playerHit()
+      }
 }
 
 //======RESET ATTACKS=====
