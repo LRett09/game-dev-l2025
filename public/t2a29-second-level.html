@@ -19,6 +19,9 @@
   let isAttacking = false
   let attackDuration = 200
   let myDirection = "right"
+
+  let musicStarted = false
+  let bossMusic = document.getElementById("CRITICAL OVERLOAD.mp3")
   
   let playerHP = 3
   let iFrameTime = 0
@@ -90,6 +93,12 @@ function myHitOther(my1,my2){
 		if (e.key === " ") {
         attack()
 		}
+
+		if (!musicStarted) {
+        bossMusic.volume = 0.6;
+        bossMusic.play();
+        musicStarted = true;
+    }
 
         myImg01.style.left = x + "px"
         myImg01.style.top  = y + "px"
