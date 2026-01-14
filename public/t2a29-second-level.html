@@ -239,8 +239,10 @@ function BossAttack() {
   }
 }
 
+//======RESET ATTACKS=====
 function resetAttack() {
   myAtk01.style.display = "none"
+  myAtk02.style.display = "none"
   myAtk03.style.display = "none"
   currentAttack = null
   atkSpawned = false
@@ -275,6 +277,7 @@ function enemyHit() {
   if (myEnemyHp >= 13) {
     myImg02.style.display = "none"
     bossFight = false
+    atkSpawned = false
     document.getElementById("myBody").style.display = ('Title Screen.gif')
   } else {
     myEnemyHp++
