@@ -16,6 +16,18 @@
 let moveAmount = 10
 let x = 50
 let y = 800
+let velX = 0
+let velY = 0
+
+const ACCEL = 1.2     
+const MAX_SPEED = 8  
+const FRICTION = 0.85 
+let keys = {}
+
+document.addEventListener("keydown", e => keys[e.key] = true)
+document.addEventListener("keyup", e => keys[e.key] = false)
+
+
 
 let isAttacking = false
 let attackDuration = 200
@@ -82,34 +94,54 @@ window.onload = function () {
   setInterval(BossAttack, 20)
 
   //=====PLAYER MOVEMENT=====
-  document.addEventListener("keydown", function (e) {
+document.addEventListener("keydown", function (e) {
 
-    let oldX = x
-    let oldY = y
+  keys[e.key] = true   // 👈 NEW
 
-    if (e.key === "w") y -= moveAmount
-    if (e.key === "s") y += moveAmount
-    if (e.key === "a") { x -= moveAmount; myDirection = "left" }
-    if (e.key === "d") { x += moveAmount; myDirection = "right" }
+  if (e.key === " ") attack()
 
-    if (e.key === " ") attack()
+  if (!musicStarted) {
+    bossMusic.volume = 0.6
+    bossMusic.play()
+    musicStarted = true
+  }
+})
+  
+document.addEventListener("keyup", function (e) {
+  keys[e.key] = false
+})
+  
+setInterval(updatePlayer, 20)
 
-    if (!musicStarted) {
-      bossMusic.volume = 0.6
-      bossMusic.play()
-      musicStarted = true
-    }
+function updatePlayer() {
+  let oldX = x
+  let oldY = y
 
-    myImg01.style.left = x + "px"
-    myImg01.style.top = y + "px"
+  if (keys["w"]) velY -= ACCEL
+  if (keys["s"]) velY += ACCEL
+  if (keys["a"]) { velX -= ACCEL; myDirection = "left" }
+  if (keys["d"]) { velX += ACCEL; myDirection = "right" }
 
-    if (myHitOther('myImg01', 'myImg02')) {
-      x = oldX
-      y = oldY
-      myImg01.style.left = x + "px"
-      myImg01.style.top = y + "px"
-    }
-  })
+  velX = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, velX))
+  velY = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, velY))
+
+  x += velX
+  y += velY
+
+  if (!keys["a"] && !keys["d"]) velX *= FRICTION
+  if (!keys["w"] && !keys["s"]) velY *= FRICTION
+
+  myImg01.style.left = x + "px"
+  myImg01.style.top = y + "px"
+
+  if (myHitOther('myImg01', 'myImg02')) {
+    x = oldX
+    y = oldY
+    velX = 0
+    velY = 0
+  }
+}
+
 }
 
 //=====BOSS ATTACKS=====
