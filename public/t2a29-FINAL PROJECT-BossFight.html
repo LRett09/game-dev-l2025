@@ -18,8 +18,9 @@ let moveAmount = 10
 let x = 50
 let y = 400
 
-let isAttacking = false
-let attackDuration = 200
+ let isAttacking = false
+  let attackDuration = 200
+  let myDirection = "right"
 
 let myImg01
 let myImg02
@@ -34,8 +35,8 @@ window.onload = function () {
     document.addEventListener("keydown", function(e) {
         if (e.key === "w") y -= moveAmount
         if (e.key === "s") y += moveAmount
-        if (e.key === "a") x -= moveAmount
-        if (e.key === "d") x += moveAmount
+        if (e.key === "a") {x -= moveAmount; myDirection = "left"}
+        if (e.key === "d") {x += moveAmount; myDirection = "right"}
 		
 		if (e.key === " ") {
         attack()
@@ -92,27 +93,22 @@ function myEnemy() {
 
 // Attacking
 function attack() {
-    if (isAttacking) return
-    isAttacking = true
+  if (isAttacking) return
+  isAttacking = true
 
-    let attackBox = document.getElementById("attackBox")
+  attackBox.style.display = "block"
 
-    // Position attack in front of player (right side)
-    attackBox.style.left = (x + 80) + "px"
-    attackBox.style.top  = (y + 60) + "px"
+  if (myDirection === "right") {
+    attackBox.style.left = (x + 75) + "px"
+    attackBox.style.top  = (y - 20) + "px"
+  } else {
+    attackBox.style.left = (x - 60) + "px"
+    attackBox.style.top  = (y - 20) + "px"
+  }
 
-    attackBox.style.display = "block"
-
-    // Check hit immediately
-    if (myHitOther('attackBox', 'myImg02')) {
-        enemyHit()
-    }
-
-    // Remove attack after short time
-    setTimeout(() => {
-        attackBox.style.display = "none"
-        isAttacking = false
-    }, attackDuration)
+  if (myHitOther('attackBox', 'myImg02')) {
+    enemyHit()
+  }
 }
 
 // When Enemy is hit
