@@ -254,6 +254,7 @@ function BossAttack() {
       if (myHitOther('myAtk04', 'myImg01')) {
         playerHit()
       }
+     if (Date.now() - atkStartTime > 4000) resetAttack()
 }
 }
 
