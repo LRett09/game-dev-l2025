@@ -13,6 +13,7 @@ let enemyY = 0
 let enemySpeed = 10
 let myEnemyHp = 0
 let myClock
+let canTeleport = true
 
 let moveAmount = 10
 let x = 50
@@ -91,7 +92,7 @@ function updatePlayer() {
 	  myClock = setInterval(myEnemy, 600)
 
 
-// Collision
+//=====COLLISION=====
 function myHitOther(my1,my2){
     let a = document.getElementById(my1)
     let b = document.getElementById(my2)
@@ -111,7 +112,7 @@ function myHitOther(my1,my2){
 }
 
 
-// Enemy AI
+//=====ENEMY AI=====
 function myEnemy() {
     let direction = Math.random() < 0.5 ? -1 : 1
     enemyX += direction * enemySpeed
@@ -123,7 +124,7 @@ function myEnemy() {
     document.getElementById('myImg02').style.left = enemyX + "px"
 }
 
-// Attacking
+//=====PLAYER ATTACK=====
 function attack() {
   if (isAttacking) return
   isAttacking = true
@@ -147,7 +148,7 @@ function attack() {
 }
 
 
-// When Enemy is hit
+//=====ENEMY HIT=====
 function enemyHit() {
 	if (myEnemyHp >= 11) {
 	document.getElementById('myImg02').style.display = "none"
@@ -157,15 +158,24 @@ function enemyHit() {
 	}
 	}
 	
-// To go to the next stage
+//=====TELEPORT TO NEXT LEVEL=====
 function teleport() {
-    if (myHitOther('myImg01', 'rift')) {
-        myImg01.style.left = '0px'
-        myImg01.style.top  = '0px'
-        console.log("rift entered")
-        location = "loadingscreen.html"
-    }
+  if (!canTeleport) return
+
+  if (myHitOther('myImg01', 'rift')) {
+    canTeleport = false  
+
+    myImg01.style.left = '0px'
+    myImg01.style.top  = '0px'
+
+    console.log("rift entered")
+
+    setTimeout(() => {
+      location = "loadingscreen.html"
+    }, 100) 
+  }
 }
+
 
 </script>
 
