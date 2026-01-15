@@ -319,8 +319,25 @@ function playerHit() {
   myImg01.style.opacity = "0.5"
   setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
 
-  if (playerHP <= 0) reset()
-  document.getElementById("myBody").style.backgroundImage = "url('Death Screen.gif')"
+if (playerHP <= 0) {
+  bossFight = false
+  myImg01.style.display = "none"
+  myImg02.style.display = "none"
+  myAtk01.style.display = "none"
+  myAtk02.style.display = "none"
+  myAtk03.style.display = "none"
+  myAtk04.style.display = "none"
+  attackBox.style.display = "none"
+  document.getElementById("myBody").style.backgroundImage =
+    "url('Death Screen.gif')" 
+  document.getElementById("myBody").size = "85%"
+
+  setTimeout(() => {
+    reset()
+    document.getElementById("myBody").style.backgroundImage =
+      "url('Boss Background.gif')"
+      document.getElementById("myBody").size = "25%"
+  }, 3000)
 }
 
 //=====RESET=====
