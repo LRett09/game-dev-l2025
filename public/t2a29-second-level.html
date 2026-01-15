@@ -200,6 +200,7 @@ function BossAttack() {
     myAtk05.style.left = (x + (Math.random() > 0.5 ? 400 : -400)) + "px"
 
   }
+  }
 
   //=====HOMING=====
   if (currentAttack === 1 && atkSpawned) {
@@ -276,7 +277,6 @@ function BossAttack() {
       }
    if (Date.now() - atkStartTime > 1000) {
     resetAttack()
-}
 }
 }
 }
