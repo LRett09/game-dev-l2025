@@ -302,6 +302,11 @@ function enemyHit() {
     bossFight = false
     atkSpawned = false
     document.getElementById("myBody").style.backgroundImage = "url('Title Screen.gif')"
+    setTimeout(() => {
+    document.getElementById("myBody").style.backgroundImage =
+      "url('Credits.png')"
+      document.getElementById("myBody").size = "100%"
+  }, 3000)
   } else {
     myEnemyHp++
   }
