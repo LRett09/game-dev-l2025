@@ -297,10 +297,11 @@ function attack() {
 //=====HIT ENEMY=====
 function enemyHit() {
   if (myEnemyHp >= 13) {
-    myImg02.style.display = "none"
+  myImg01.style.display = "none"
+  myImg02.style.display = "none"
     bossFight = false
     atkSpawned = false
-    document.getElementById("myBody").style.display = ('Title Screen.gif')
+    document.getElementById("myBody").style.backgroundImage = "url('Title Screen.gif')"
   } else {
     myEnemyHp++
   }
@@ -319,6 +320,7 @@ function playerHit() {
   setTimeout(() => myImg01.style.opacity = "1", IFRAME_DURATION)
 
   if (playerHP <= 0) reset()
+  document.getElementById("myBody").style.backgroundImage = "url('Death Screen.gif')"
 }
 
 //=====RESET=====
