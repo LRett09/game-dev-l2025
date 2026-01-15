@@ -195,9 +195,10 @@ function BossAttack() {
   }
 
     if (currentAttack === 5) {
-       myAtk04.style.display = "block"
-       myAtk04.style.top = (x +- 400) + "px"
-       myAtk04.style.left = (y +- 200) + "px"
+       myAtk05.style.display = "block"
+    myAtk05.style.top = (y + (Math.random() > 0.5 ? 400 : -400)) + "px"
+    myAtk05.style.left = (x + (Math.random() > 0.5 ? 400 : -400)) + "px"
+
   }
 
   //=====HOMING=====
