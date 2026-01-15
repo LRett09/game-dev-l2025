@@ -29,6 +29,9 @@ let keys = {}
 document.addEventListener("keydown", e => keys[e.key] = true)
 document.addEventListener("keyup", e => keys[e.key] = false)
 
+let lastActionTime = Date.now()
+const INACTIVITY_LIMIT = 10000 // 10 seconds
+let reminder = null
 
  let isAttacking = false
   let attackDuration = 200
@@ -39,6 +42,15 @@ let myImg02
 let myPortal
 
 window.onload = function () {
+
+	reminder = document.getElementById("reminder")
+
+	setInterval(() => {
+  if (Date.now() - lastActionTime >= INACTIVITY_LIMIT) {
+    reminder.style.display = "block"
+  }
+}, 500)
+
 
 		myImg01 = document.getElementById("myImg01")
 		myImg02 = document.getElementById("myImg02")
@@ -75,6 +87,10 @@ function updatePlayer() {
 
   if (!keys["a"] && !keys["d"]) velX *= FRICTION
   if (!keys["w"] && !keys["s"]) velY *= FRICTION
+  if (keys["w"] || keys["a"] || keys["s"] || keys["d"]) {
+  registerAction()
+}
+
 
   myImg01.style.left = x + "px"
   myImg01.style.top = y + "px"
@@ -111,6 +127,11 @@ function myHitOther(my1,my2){
            bottom1 >= top2 && top1 <= bottom2
 }
 
+//=====CONTROLS REMINDER=====
+	function registerAction() {
+  lastActionTime = Date.now()
+  reminder.style.display = "none"
+}
 
 //=====ENEMY AI=====
 function myEnemy() {
@@ -128,6 +149,8 @@ function myEnemy() {
 function attack() {
   if (isAttacking) return
   isAttacking = true
+registerAction()
+
 
   attackBox.style.display = "block"
 
@@ -175,6 +198,23 @@ function teleport() {
     }, 100) 
   }
 }
+
+<div id="reminder" style="
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-family: sans-serif;
+  font-size: 14px;
+  border-radius: 8px;
+  display: none;
+  z-index: 999;
+">
+  WASD to move · Space to attack
+</div>
 
 
 </script>
