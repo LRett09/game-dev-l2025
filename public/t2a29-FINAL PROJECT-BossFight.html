@@ -158,11 +158,11 @@ registerAction()
 document.getElementById('myAtkBox').style.display = "block"
 
   if (myDirection === "right") {
-    myAtkBox.style.left = (x + 75) + "px"
-    myAtkBox.style.top = (y - 20) + "px"
+    document.getElementById('myAtkBox').style.left = (x + 75) + "px"
+    document.getElementById('myAtkBox').style.top = (y - 20) + "px"
   } else {
-    myAtkBox.style.left = (x - 60) + "px"
-    myAtkBox.style.top = (y - 20) + "px"
+    document.getElementById('myAtkBox').style.left = (x - 60) + "px"
+    document.getElementById('myAtkBox').style.top = (y - 20) + "px"
   }
 
   if (myHitOther('myAtkBox', 'myImg02')) enemyHit()
