@@ -55,6 +55,9 @@ window.onload = function () {
 		myImg01 = document.getElementById("myImg01")
 		myImg02 = document.getElementById("myImg02")
 		myPortal = document.getElementById("rift")
+	    myAtkBox = document.getElementById("attackBox")
+
+		myAtkBox.style.display = "none"
 
 
   document.addEventListener("keydown", function (e) {
@@ -153,20 +156,20 @@ function attack() {
 registerAction()
 
 
-  attackBox.style.display = "block"
+  myAtkBox.style.display = "block"
 
   if (myDirection === "right") {
-    attackBox.style.left = (x + 75) + "px"
-    attackBox.style.top = (y - 20) + "px"
+    myAtkBox.style.left = (x + 75) + "px"
+    myAtkBox.style.top = (y - 20) + "px"
   } else {
-    attackBox.style.left = (x - 60) + "px"
-    attackBox.style.top = (y - 20) + "px"
+    myAtkBox.style.left = (x - 60) + "px"
+    myAtkBox.style.top = (y - 20) + "px"
   }
 
-  if (myHitOther('attackBox', 'myImg02')) enemyHit()
+  if (myHitOther('myAtkBox', 'myImg02')) enemyHit()
 
   setTimeout(() => {
-    attackBox.style.display = "none"
+    myAtkBox.style.display = "none"
     isAttacking = false
   }, attackDuration)
 }
