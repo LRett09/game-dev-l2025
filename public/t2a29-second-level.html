@@ -276,10 +276,11 @@ function BossAttack() {
      if (currentAttack === 5 && atkSpawned) {
  if (Date.now() - atkStartTime > 400) atk05CanHit = true
     if (atk05CanHit && myHitOther('myAtk05', 'myImg01')) playerHit()
-      }
+    
    if (Date.now() - atkStartTime > 1000) {
     resetAttack()
 }
+     }
 }
 
 
