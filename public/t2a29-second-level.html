@@ -326,6 +326,7 @@ function enemyHit() {
   myImg02.style.display = "none"
     bossFight = false
     atkSpawned = false
+    resetAttack()
     document.getElementById("myBody").style.backgroundImage = "url('Title Screen.gif')"
     setTimeout(() => {
     document.getElementById("myBody").style.backgroundImage =
@@ -387,6 +388,7 @@ function reset() {
   myAtk02.style.display = "none"
   myAtk03.style.display = "none"
   myAtk04.style.display = "none"
+  myAtk05.style.display = "none"
 
   myImg01.style.display = "block"
   myImg02.style.display = "block"
