@@ -155,7 +155,7 @@ function attack() {
 registerAction()
 
 
-  myAtkBox.style.display = "block"
+document.getElementById('myAtkBox').style.display = "block"
 
   if (myDirection === "right") {
     myAtkBox.style.left = (x + 75) + "px"
@@ -168,7 +168,7 @@ registerAction()
   if (myHitOther('myAtkBox', 'myImg02')) enemyHit()
 
   setTimeout(() => {
-    myAtkBox.style.display = "none"
+    document.getElementById('myAtkBox').style.display = "none"
     isAttacking = false
   }, attackDuration)
 }
