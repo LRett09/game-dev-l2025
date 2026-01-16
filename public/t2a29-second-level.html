@@ -62,6 +62,7 @@ let atk03CanHit
 let atkStartTime = 0
 let myAtk04
 let myAtk05
+let atk05CanHit
 
 //=====COLLISION=====
 function myHitOther(my1, my2) {
@@ -198,6 +199,7 @@ function BossAttack() {
        myAtk05.style.display = "block"
     myAtk05.style.top = (y + (Math.random() > 0.5 ? 400 : -400)) + "px"
     myAtk05.style.left = (x + (Math.random() > 0.5 ? 400 : -400)) + "px"
+      atk05CanHit = false
 
   }
   }
@@ -249,7 +251,7 @@ function BossAttack() {
     playerHit()
   }
 
-  if (Date.now() - atkStartTime > 10000) {
+  if (Date.now() - atkStartTime > 5000) {
     resetAttack()
   }
 }
@@ -272,8 +274,8 @@ function BossAttack() {
 
   //=====SPIKE=====
      if (currentAttack === 5 && atkSpawned) {
-      if (myHitOther('myAtk05', 'myImg01')) {
-        playerHit()
+ if (Date.now() - atkStartTime > 400) atk05CanHit = true
+    if (atk05CanHit && myHitOther('myAtk05', 'myImg01')) playerHit()
       }
    if (Date.now() - atkStartTime > 1000) {
     resetAttack()
